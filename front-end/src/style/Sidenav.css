@@ -1,18 +1,60 @@
-.sidenav-menu a {
+/* 整體側邊導航樣式 */
+.sidenav {
+  width: 250px; /* 側邊導航的寬度 */
+  background-color: #2c3e50; /* 深色背景 */
+  color: #ecf0f1; /* 淺色文字 */
+  height: 100vh; /* 高度填滿視窗 */
   display: flex;
-  align-items: center;
-  padding: 15px 20px;
-  color: #ffffff;
-  text-decoration: none;
-  transition: background-color 0.3s;
+  flex-direction: column; /* 垂直排列 */
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5); /* 添加陰影 */
 }
 
- /* 添加对 Link 组件的样式支持 */
-.sidenav-menu Link {
+/* 標題樣式 */
+.sidenav-header {
+  padding: 20px;
+  text-align: center; /* 文字居中 */
+  background-color: #34495e; /* 標題背景顏色 */
+}
+
+/* 菜單樣式 */
+.sidenav-menu {
+  flex-grow: 1; /* 使菜單區域填滿剩餘空間 */
+}
+
+/* 菜單項樣式 */
+.sidenav-menu ul {
+  list-style-type: none; /* 去除項目符號 */
+  padding: 0; /* 去除內邊距 */
+  margin: 0; /* 去除外邊距 */
+}
+
+.sidenav-menu li {
+  border-bottom: 1px solid #7f8c8d; /* 分隔線 */
+}
+
+/* 鏈接樣式 */
+.sidenav-menu a {
   display: flex;
-  align-items: center;
-  padding: 15px 20px;
-  color: #ffffff;
-  text-decoration: none;
-  transition: background-color 0.3s;
-} 
+  align-items: center; /* 垂直居中 */
+  padding: 15px 20px; /* 內邊距 */
+  color: #ecf0f1; /* 鏈接文字顏色 */
+  text-decoration: none; /* 去除下劃線 */
+  transition: background-color 0.3s, color 0.3s; /* 添加過渡效果 */
+}
+
+/* 懸停效果 */
+.sidenav-menu a:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* 懸停時背景顏色 */
+  color: #ffffff; /* 懸停時文字顏色 */
+}
+
+/* 圖標樣式 */
+.icon {
+  margin-right: 10px; /* 圖標與文字之間的間距 */
+  font-size: 1.2em; /* 圖標大小 */
+}
+
+/* 文字樣式 */
+.text {
+  flex-grow: 1; /* 使文字區域填滿剩餘空間 */
+}
