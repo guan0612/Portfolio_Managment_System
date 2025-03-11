@@ -1,0 +1,18 @@
+.sidenav-menu a {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  color: #ffffff;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+
+ /* 添加对 Link 组件的样式支持 */
+.sidenav-menu Link {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  color: #ffffff;
+  text-decoration: none;
+  transition: background-color 0.3s;
+} 

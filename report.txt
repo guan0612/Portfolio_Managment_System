@@ -1,0 +1,32 @@
+front-end/
+├── public/                     # 静态资源目录
+│   ├── index.html             # 主 HTML 文件
+│   ├── manifest.json          # PWA 配置文件
+│   ├── robots.txt             # 搜索引擎配置
+│   └── favicon.ico            # 网站图标
+│
+├── src/                       # 源代码目录
+│   ├── components/            # 组件目录
+│   │   ├── MarkdownRenderer.js  # Markdown 渲染组件
+│   │   └── Sidenav.js          # 侧边导航组件
+│   │
+│   ├── pages/                 # 页面组件目录
+│   │   ├── Introduction.js      # 介绍页面
+│   │   ├── StockRelationGraph.js # 股票关系图页面
+│   │   ├── TradingStrategy.js   # 交易策略页面
+│   │   └── Settings.js          # 设置页面
+│   │
+│   ├── style/                 # 样式文件目录
+│   │   ├── App.css             # App 组件样式
+│   │   ├── index.css           # 全局样式
+│   │   ├── MarkdownRenderer.css # Markdown 渲染器样式
+│   │   └── Sidenav.css         # 侧边导航样式
+│   │
+│   ├── App.js                 # 主应用组件
+│   ├── App.test.js           # 应用测试文件
+│   ├── index.js              # 应用入口文件
+│   └── reportWebVitals.js    # 性能监控
+│
+├── package.json              # 项目依赖配置
+├── package-lock.json         # 依赖版本锁定文件
+└── README.md                # 项目说明文档
