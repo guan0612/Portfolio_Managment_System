@@ -7,6 +7,12 @@ const IntroductionBento = () => {
       <div className="header">
         <h1>Portfolio Management via Reinforcement Learning and GAT</h1>
         <p className="subtitle">A dual-layer approach to balance risk and return in stock trading</p>
+        <a href="https://etd.lib.nycu.edu.tw/cgi-bin/gs32/ncugsweb.cgi?o=dncucdr&s=id=%22GC108552020%22.&searchmode=basic" 
+           className="paper-link" 
+           target="_blank" 
+           rel="noopener noreferrer">
+          查看論文原文
+        </a>
       </div>
       
       <div className="bento-grid">
@@ -18,6 +24,11 @@ const IntroductionBento = () => {
         <div className="bento-item architecture">
           <h2>Architecture</h2>
           <div className="architecture-content">
+            <img 
+              src="https://hackmd.io/_uploads/BySm8QsFkg.png" 
+              alt="System Architecture" 
+              className="architecture-image"
+            />
             <div className="architecture-diagram">
               <div className="layer layer-1">
                 <div className="layer-box">

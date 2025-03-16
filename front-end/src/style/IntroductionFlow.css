@@ -21,6 +21,28 @@
   color: #7f8c8d;
 }
 
+.system-architecture {
+  text-align: center;
+  margin-bottom: 2rem;
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.architecture-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.image-caption {
+  margin-top: 1rem;
+  color: #7f8c8d;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
 .flow-diagram {
   background-color: #f8f9fa;
   border-radius: 12px;

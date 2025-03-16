@@ -134,6 +134,32 @@
   color: #6c757d;
 }
 
+.image-container {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+}
+
+.architecture-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.image-caption {
+  margin-top: 1rem;
+  color: #7f8c8d;
+  font-style: italic;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
 /* Module Tabs */
 .module-header {
   display: flex;

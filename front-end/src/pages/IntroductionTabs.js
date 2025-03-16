@@ -13,6 +13,12 @@ const IntroductionTabs = () => {
       <div className="header">
         <h1>Portfolio Management via RL and GAT</h1>
         <p className="subtitle">A comprehensive two-layer reinforcement learning approach</p>
+        <a href="https://etd.lib.nycu.edu.tw/cgi-bin/gs32/ncugsweb.cgi?o=dncucdr&s=id=%22GC108552020%22.&searchmode=basic" 
+           className="paper-link" 
+           target="_blank" 
+           rel="noopener noreferrer">
+          查看論文原文
+        </a>
       </div>
       
       <div className="tabs-container">
@@ -78,9 +84,13 @@ const IntroductionTabs = () => {
                   </ol>
                 </div>
                 <div className="overview-image">
-                  <div className="image-placeholder">
-                    <span className="image-icon">📊</span>
-                    <p>System Architecture</p>
+                  <div className="image-container">
+                    <img 
+                      src="https://hackmd.io/_uploads/BySm8QsFkg.png" 
+                      alt="System Architecture" 
+                      className="architecture-image"
+                    />
+                    <p className="image-caption">System Architecture Diagram</p>
                   </div>
                 </div>
               </div>

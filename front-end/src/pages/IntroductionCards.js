@@ -7,6 +7,20 @@ const IntroductionCards = () => {
       <div className="header">
         <h1>Portfolio Management via RL and GAT</h1>
         <p className="subtitle">A modular approach to balanced investment risk and return</p>
+        <a href="https://etd.lib.nycu.edu.tw/cgi-bin/gs32/ncugsweb.cgi?o=dncucdr&s=id=%22GC108552020%22.&searchmode=basic" 
+           className="paper-link" 
+           target="_blank" 
+           rel="noopener noreferrer">
+          查看論文原文
+        </a>
+      </div>
+      
+      <div className="system-architecture">
+        <img 
+          src="https://hackmd.io/_uploads/BySm8QsFkg.png" 
+          alt="System Architecture" 
+          className="architecture-image"
+        />
       </div>
       
       <div className="overview">
