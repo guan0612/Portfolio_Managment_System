@@ -1,29 +1,35 @@
 .stock-graph-container {
-  padding: 24px;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .stock-graph-card {
-  width: 100%;
-  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0 !important; /* 移除 Card 的默认外边距 */
 }
 
 .loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 600px;
+  height: 400px;
   font-size: 16px;
   color: #666;
 }
 
 .graph-content {
   width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0; /* 重要：防止flex子元素溢出 */
 }
 
-/* 确保echarts容器不被遮蔽 */
+/* 确保echarts容器适应父容器 */
 .echarts-for-react {
   width: 100% !important;
-  height: 500px !important;
-}  
+  height: 100% !important;
+  min-height: 600px;
+}

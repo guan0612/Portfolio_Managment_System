@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { Card, Slider, Switch, Space, Input, Button } from 'antd';
+import { Card, Slider, Switch, Space, Input, Button, Select } from 'antd';
 import '../style/StockRelationGraph.css';
+import { stockNames } from '../data/stockNames';
+import { stockIndustries, getAllIndustries } from '../data/stockIndustries';
+import { industryColors } from '../data/industryColors';
+
+const { Option } = Select;
 
 const StockRelationGraph = () => {
     const [graphData, setGraphData] = useState({ nodes: [], links: [] });
@@ -10,86 +15,142 @@ const StockRelationGraph = () => {
     const [showLabels, setShowLabels] = useState(true);
     const [searchCode, setSearchCode] = useState('');
     const [highlightedNodes, setHighlightedNodes] = useState([]);
+    const [availableDates, setAvailableDates] = useState([]);
+    const [selectedDate, setSelectedDate] = useState(null);
+    const allIndustries = getAllIndustries();
 
+    // 添加一個輔助函數來獲取完整的股票代碼
+    const getFullStockCode = (code) => `${code}.TW`;
+
+    // 添加一個輔助函數來獲取公司名稱
+    const getCompanyName = (code) => {
+        const fullCode = getFullStockCode(code);
+        return stockNames[fullCode] || code;
+    };
+
+    // 添加一個輔助函數來獲取股票的產業類別
+    const getStockIndustry = (code) => {
+        const fullCode = getFullStockCode(code);
+        return stockIndustries[fullCode] || '其他';
+    };
+
+    // 添加一個輔助函數來獲取產業顏色
+    const getIndustryColor = (code) => {
+        const industry = getStockIndustry(code);
+        return industryColors[industry] || '#7986CB'; // 預設顏色
+    };
+
+    // 添加一個函數來判斷節點是否應該顯示
+    const shouldShowNode = (code) => {
+        return true;
+    };
+
+    // 取得可用日期
     useEffect(() => {
-        fetchGraphData();
-    }, [threshold]);
+        fetch('http://localhost:5000/gat/dates')
+            .then(response => response.json())
+            .then(dates => {
+                setAvailableDates(dates);
+                if (dates.length > 0) {
+                    setSelectedDate(dates[0]); // 預設選擇最新日期
+                }
+            })
+            .catch(error => console.error('Error fetching dates:', error));
+    }, []);
 
-    const fetchGraphData = async () => {
-        try {
-            const response = await fetch('http://localhost:5000/gat');
-            const data = await response.json();
-            console.log('Raw data:', data);
+    // 取得圖數據
+    useEffect(() => {
+        if (!selectedDate) return;
+        
+        setLoading(true);
+        fetch(`http://localhost:5000/gat/${selectedDate}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data); // 添加調試信息
+                
+                if (data.error) {
+                    console.error('Server error:', data.error);
+                    setLoading(false);
+                    return;
+                }
 
-            const nodes = new Set();
-            const links = [];
-            
-            // 处理邻接矩阵
-            data.forEach((row, rowIndex) => {
-                // 获取当前行的股票代码（作为源节点）
-                const stockCodes = Object.keys(row);
-                const sourceCode = stockCodes[rowIndex];  // 使用行索引对应的股票代码
-                nodes.add(sourceCode);
+                console.log('Data length:', data.length);
+                console.log('First row keys:', Object.keys(data[0]));
+                console.log('First row:', data[0]);
 
-                // 遍历该行所有的值，建立连接
-                stockCodes.forEach((targetCode, colIndex) => {
-                    const weight = row[targetCode];
-                    // 只添加权重大于阈值的连接，并且避免自连接
-                    if (weight > threshold && sourceCode !== targetCode) {
-                        links.push({
-                            source: sourceCode,
-                            target: targetCode,
-                            value: parseFloat(weight),
-                            lineStyle: {
-                                width: Math.max(1, parseFloat(weight) * 10),
-                                opacity: Math.min(parseFloat(weight) * 5, 1)
+                if (Array.isArray(data)) {
+                    const nodes = new Set();
+                    const links = [];
+                    
+                    // 先取得所有股票代碼（從第一行的keys）
+                    const stockCodes = Object.keys(data[0]);
+                    
+                    // 遍歷每一行（每一行代表一支股票與其他股票的關係）
+                    data.forEach((row, rowIndex) => {
+                        const sourceStock = stockCodes[rowIndex];  // 該行代表的股票
+                        
+                        // 遍歷該股票與其他股票的關係
+                        stockCodes.forEach((targetStock, colIndex) => {
+                            if (rowIndex === colIndex) return;  // 跳過自己
+                            
+                            const weight = parseFloat(row[targetStock]);
+                            if (!isNaN(weight) && weight >= threshold) {
+                                nodes.add(sourceStock);
+                                nodes.add(targetStock);
+                                links.push({
+                                    source: sourceStock,
+                                    target: targetStock,
+                                    value: weight,
+                                    lineStyle: {
+                                        opacity: Math.min(weight * 2, 1),
+                                        width: Math.max(1, weight * 5)
+                                    }
+                                });
                             }
                         });
+                    });
+
+                    console.log('Number of nodes:', nodes.size);
+                    console.log('Number of links:', links.length);
+                    console.log('Sample nodes:', Array.from(nodes).slice(0, 5));
+                    console.log('Sample links:', links.slice(0, 5));
+
+                    if (nodes.size > 0) {
+                        setGraphData({
+                            nodes: Array.from(nodes).map(code => ({
+                                name: code,
+                                value: links.filter(link => 
+                                    link.source === code || link.target === code
+                                ).length,
+                                symbolSize: 30,
+                                category: getStockIndustry(code)
+                            })),
+                            links: links
+                        });
                     }
-                });
+                    setLoading(false);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching graph data:', error);
+                setLoading(false);
             });
-
-            // 创建节点数组
-            const nodesArray = Array.from(nodes).map(code => {
-                const connectionCount = links.filter(link => 
-                    link.source === code || link.target === code
-                ).length;
-                
-                return {
-                    name: code,
-                    value: connectionCount,
-                    symbolSize: Math.max(20, Math.min(50, 20 + connectionCount * 2)),
-                    itemStyle: {
-                        color: '#1890ff'
-                    }
-                };
-            });
-
-            console.log('Nodes:', nodesArray);
-            console.log('Links:', links);
-            console.log('Total links:', links.length);
-            console.log('Sample links:', links.slice(0, 5));
-
-            setGraphData({
-                nodes: nodesArray,
-                links: links
-            });
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching graph data:', error);
-            setLoading(false);
-        }
-    };
+    }, [selectedDate, threshold]);
 
     const handleSearch = () => {
         if (!searchCode) return;
 
-        // 找出与搜索股票相关的所有连接
+        // 找出與搜索股票相關的所有連接
         const relatedLinks = graphData.links.filter(link => 
             link.source === searchCode || link.target === searchCode
         );
 
-        // 获取相关节点
+        // 取得相關節點
         const relatedNodes = new Set();
         relatedLinks.forEach(link => {
             relatedNodes.add(link.source);
@@ -98,124 +159,153 @@ const StockRelationGraph = () => {
 
         setHighlightedNodes(Array.from(relatedNodes));
 
-        // 打印相关信息
-        console.log(`股票 ${searchCode} 的相關連接：`);
+        // 打印相關信息
+        console.log(`股票 ${searchCode} (${getCompanyName(searchCode)}) 的相關連接：`);
         relatedLinks.forEach(link => {
-            console.log(`${link.source} → ${link.target}: ${link.value.toFixed(4)}`);
+            const sourceName = getCompanyName(link.source);
+            const targetName = getCompanyName(link.target);
+            console.log(`${link.source} (${sourceName}) → ${link.target} (${targetName}): ${link.value.toFixed(4)}`);
         });
     };
 
-    const getOption = () => ({
-        title: {
-            text: '股票關聯圖',
-            subtext: '基於GAT模型的分析結果',
-            top: 'top',
-            left: 'center'
-        },
-        tooltip: {
-            trigger: 'item',
-            formatter: function (params) {
-                if (params.dataType === 'edge') {
-                    return `${params.data.source} → ${params.data.target}<br/>相關度: ${params.data.value.toFixed(4)}`;
-                }
-                return `股票代碼: ${params.name}<br/>連接數: ${params.value}`;
-            }
-        },
-        series: [{
-            name: '股票關聯',
-            type: 'graph',
-            layout: 'force',
-            data: graphData.nodes.map(node => ({
-                ...node,
-                itemStyle: {
-                    color: highlightedNodes.length === 0 || highlightedNodes.includes(node.name) 
-                        ? '#1890ff' 
-                        : '#cccccc'
-                }
-            })),
-            links: graphData.links.map(link => ({
-                ...link,
-                lineStyle: {
-                    ...link.lineStyle,
-                    opacity: highlightedNodes.length === 0 || 
-                        (highlightedNodes.includes(link.source) && highlightedNodes.includes(link.target))
-                        ? link.lineStyle.opacity
-                        : 0.1
-                }
-            })),
-            roam: true,
-            label: {
-                show: showLabels,
-                position: 'right',
-                fontSize: 12
+    const getOption = () => {
+        return {
+            title: {
+                text: 'Stock Relation Graph',
+                subtext: 'based on GAT model',
+                top: 'top',
+                left: 'center'
             },
-            force: {
-                repulsion: 500,
-                gravity: 0.1,
-                edgeLength: 200,
-                layoutAnimation: true
-            },
-            lineStyle: {
-                color: '#1890ff',
-                curveness: 0.3
-            },
-            emphasis: {
-                focus: 'adjacency',
-                lineStyle: {
-                    width: 10
+            tooltip: {
+                trigger: 'item',
+                formatter: function (params) {
+                    if (params.dataType === 'edge') {
+                        const sourceName = getCompanyName(params.data.source);
+                        const targetName = getCompanyName(params.data.target);
+                        const sourceIndustry = getStockIndustry(params.data.source);
+                        const targetIndustry = getStockIndustry(params.data.target);
+                        return `${params.data.source} (${sourceName}, ${sourceIndustry}) → ${params.data.target} (${targetName}, ${targetIndustry})<br/>相關度: ${params.data.value.toFixed(4)}`;
+                    }
+                    const companyName = getCompanyName(params.name);
+                    const industry = getStockIndustry(params.name);
+                    return `股票代碼: ${params.name}<br/>公司名稱: ${companyName}<br/>產業類別: ${industry}<br/>連接數: ${params.value}`;
                 }
-            }
-        }]
-    });
+            },
+            legend: {
+                data: allIndustries,
+                top: 50,
+                type: 'scroll',
+                width: '80%',
+                textStyle: {
+                    fontSize: 12
+                },
+                selected: allIndustries.reduce((acc, industry) => {
+                    acc[industry] = true;
+                    return acc;
+                }, {}),
+                selector: [
+                    { type: 'all', title: '全選' },
+                    { type: 'inverse', title: '反選' }
+                ]
+            },
+            series: [{
+                type: 'graph',
+                layout: 'force',
+                animation: false,
+                draggable: true,
+                roam: true,  // 允許縮放和平移
+                zoom: 1,     // 初始縮放級別
+                scaleLimit: {  // 縮放限制
+                    min: 0.1,
+                    max: 5
+                },
+                data: graphData.nodes.map(node => ({
+                    ...node,
+                    symbolSize: Math.max(20, Math.min(50, 20 + node.value)),
+                    itemStyle: {
+                        color: highlightedNodes.length === 0 || highlightedNodes.includes(node.name)
+                            ? getIndustryColor(node.name)
+                            : '#cccccc'
+                    }
+                })),
+                categories: allIndustries.map(industry => ({
+                    name: industry,
+                    itemStyle: {
+                        color: industryColors[industry]
+                    }
+                })),
+                force: {
+                    repulsion: 1000,
+                    gravity: 0.1,
+                    edgeLength: 200,
+                    friction: 0.6,
+                    layoutAnimation: true
+                },
+                edges: graphData.links.map(link => ({
+                    ...link,
+                    lineStyle: {
+                        width: Math.max(1, link.value * 5),
+                        opacity: highlightedNodes.length === 0 || 
+                            (highlightedNodes.includes(link.source) && highlightedNodes.includes(link.target))
+                            ? Math.min(link.value * 2, 1)
+                            : 0.1,
+                        curveness: 0.1
+                    }
+                })),
+                label: {
+                    show: showLabels,
+                    position: 'right',
+                    formatter: '{b}'
+                }
+            }]
+        };
+    };
 
     return (
-        <Card title="股票關聯圖" style={{ margin: '20px' }}>
-            <Space direction="vertical" style={{ marginBottom: '20px', width: '100%' }}>
-                <div>
-                    相關度閾值: {threshold}
-                    <Slider
-                        min={0}
-                        max={0.1}
-                        step={0.001}
-                        value={threshold}
-                        onChange={setThreshold}
-                    />
-                </div>
-                <div>
-                    顯示標籤:
-                    <Switch
-                        checked={showLabels}
-                        onChange={setShowLabels}
-                        style={{ marginLeft: '10px' }}
-                    />
-                </div>
-                <Space>
-                    <Input 
-                        placeholder="輸入股票代碼" 
-                        value={searchCode}
-                        onChange={e => setSearchCode(e.target.value)}
-                        style={{ width: 200 }}
-                    />
-                    <Button onClick={handleSearch}>查看關聯</Button>
-                    <Button onClick={() => {
-                        setSearchCode('');
-                        setHighlightedNodes([]);
-                    }}>重置</Button>
+        <div className="stock-graph-container">
+            <Card className="stock-graph-card">
+                <Space direction="vertical" style={{ width: '100%' }}>
+                    <Space>
+                        <Select
+                            style={{ width: 200 }}
+                            value={selectedDate}
+                            onChange={setSelectedDate}
+                            options={availableDates.map(date => ({ value: date, label: date }))}
+                            placeholder="選擇日期"
+                        />
+                        <Input
+                            style={{ width: 120 }}
+                            placeholder="輸入股票代碼"
+                            value={searchCode}
+                            onChange={e => setSearchCode(e.target.value)}
+                        />
+                        <Button onClick={handleSearch}>搜尋</Button>
+                        <span>閾值: {threshold}</span>
+                        <Slider
+                            style={{ width: 200 }}
+                            min={0}
+                            max={0.1}
+                            step={0.001}
+                            value={threshold}
+                            onChange={setThreshold}
+                        />
+                    </Space>
+                    <div className="graph-content">
+                        {loading ? (
+                            <div className="loading">加載中...</div>
+                        ) : (
+                            <ReactECharts
+                                option={getOption()}
+                                style={{ height: '100%', width: '100%' }}
+                                opts={{ renderer: 'canvas' }}
+                                className="echarts-for-react"
+                            />
+                        )}
+                    </div>
                 </Space>
-            </Space>
-            {loading ? (
-                <div style={{ textAlign: 'center', padding: '20px' }}>載入中...</div>
-            ) : (
-                <div style={{ height: '600px', width: '100%' }}>
-                    <ReactECharts
-                        option={getOption()}
-                        style={{ height: '100%', width: '100%' }}
-                        opts={{ renderer: 'canvas' }}
-                    />
-                </div>
-            )}
-        </Card>
+            </Card>
+        </div>
     );
 };
 
-export default StockRelationGraph; 
+export default StockRelationGraph;
