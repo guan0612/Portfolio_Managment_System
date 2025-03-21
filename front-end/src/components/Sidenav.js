@@ -8,6 +8,7 @@ const Sidenav = () => {
     { to: '/stock-graph', icon: '🕸️', text: 'Stock Relation Graph' },
     { to: '/trading-strategy', icon: '💰', text: 'Trading Strategy' },
     { to: '/settings', icon: '⚙️', text: 'Settings' },
+    { to: '/trading-performance', icon: '📈', text: 'Trading Performance' }, // 新增這一行
   ];
 
   return (

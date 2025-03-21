@@ -5,6 +5,7 @@ import IntroductionBento from './pages/IntroductionBento';
 import StockGraph from './pages/StockRelationGraph';
 import TradingStrategy from './pages/TradingStrategy';
 import Settings from './pages/Settings';
+import TradingPerformance from './pages/TradingPerformance';
 import './style/App.css';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Route path="/stock-graph" element={<StockGraph />} />
           <Route path="/trading-strategy" element={<TradingStrategy />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/trading-performance" element={<TradingPerformance />} />
         </Routes>
       </main>
     </div>

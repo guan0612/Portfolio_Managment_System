@@ -31,5 +31,36 @@ def gat(date):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route('/trading-performance', methods=['GET'])
+def trading_performance():
+    # 讀取交易行為和帳戶價值數據
+    actions_path = './Trading Agent/actions.csv'
+    account_value_path = './Trading Agent/account_value.csv'
+    
+    # 確保文件存在
+    if not os.path.exists(actions_path) or not os.path.exists(account_value_path):
+        return jsonify({"error": "數據文件不存在"}), 404
+    
+    # 讀取數據
+    actions_df = pd.read_csv(actions_path)
+    account_value_df = pd.read_csv(account_value_path)
+    
+    # 處理數據以便前端使用
+    actions_data = actions_df.to_dict(orient='records')
+    account_value_data = account_value_df.to_dict(orient='records')
+    
+    # 計算每日收益率
+    account_value_df['daily_return'] = account_value_df['account_value'].pct_change()
+    account_value_df['daily_return'].iloc[0] = 0  # 第一天沒有收益率，設為0
+    account_value_df['cumulative_return'] = (account_value_df['account_value'] / account_value_df['account_value'].iloc[0]) - 1
+    
+    # 將處理後的數據加入結果
+    return jsonify({
+        "actions": actions_data,
+        "account_value": account_value_df[['date', 'account_value', 'daily_return', 'cumulative_return']].to_dict(orient='records'),
+        "stocks": actions_df.columns[1:].tolist()  # 獲取股票代碼列表
+    })
+
 if __name__ == '__main__':
     app.run(debug=True)
