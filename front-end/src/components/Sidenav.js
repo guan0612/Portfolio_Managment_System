@@ -4,11 +4,7 @@ import { Link } from 'react-router-dom';
 
 const Sidenav = () => {
   const menuItems = [
-    { to: '/', icon: '📖', text: 'Introduction (Default)' },
-    { to: '/introduction-cards', icon: '🃏', text: 'Introduction (Cards)' },
-    { to: '/introduction-flow', icon: '🔄', text: 'Introduction (Flow)' },
-    { to: '/introduction-tabs', icon: '📑', text: 'Introduction (Tabs)' },
-    { to: '/introduction-bento', icon: '🍱', text: 'Introduction (Bento)' },
+    { to: '/introduction-bento', icon: '📖', text: 'Introduction' },
     { to: '/stock-graph', icon: '🕸️', text: 'Stock Relation Graph' },
     { to: '/trading-strategy', icon: '💰', text: 'Trading Strategy' },
     { to: '/settings', icon: '⚙️', text: 'Settings' },
