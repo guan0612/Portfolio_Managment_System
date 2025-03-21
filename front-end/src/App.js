@@ -1,10 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidenav from './components/Sidenav';
-import Introduction from './pages/Introduction';
-import IntroductionCards from './pages/IntroductionCards';
-import IntroductionFlow from './pages/IntroductionFlow';
-import IntroductionTabs from './pages/IntroductionTabs';
 import IntroductionBento from './pages/IntroductionBento';
 import StockGraph from './pages/StockRelationGraph';
 import TradingStrategy from './pages/TradingStrategy';
