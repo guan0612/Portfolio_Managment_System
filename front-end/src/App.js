@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidenav from './components/Sidenav';
-import Introduction from './pages/Introduction';
+import IntroductionBento from './pages/IntroductionBento';
 import StockGraph from './pages/StockRelationGraph';
 import TradingStrategy from './pages/TradingStrategy';
 import Settings from './pages/Settings';
@@ -14,7 +14,7 @@ function App() {
       <Sidenav />
       <main className="main-content">
         <Routes>
-          <Route path="/" element={<Introduction />} />
+          <Route path="/introduction-bento" element={<IntroductionBento />} />
           <Route path="/stock-graph" element={<StockGraph />} />
           <Route path="/trading-strategy" element={<TradingStrategy />} />
           <Route path="/settings" element={<Settings />} />
