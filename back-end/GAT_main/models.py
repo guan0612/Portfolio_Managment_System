@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 from GAT_main.layers import GraphAttentionLayer
 
+
 ################################
 ###    GAT NETWORK MODULE    ###
 ################################
