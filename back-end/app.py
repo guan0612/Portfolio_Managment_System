@@ -1,7 +1,9 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_file
 from flask_cors import CORS
 from GAT_main.run_GATModel import GATModel
 import pandas as pd
+import os
+
 app = Flask(__name__)
 CORS(app)
 
@@ -25,6 +27,20 @@ def gat():
         
     print("Returning data:", result)  # 调试输出
     return jsonify(result)
+
+@app.route('/api/low-risk-stocks', methods=['GET'])
+def get_low_risk_stocks():
+    try:
+        # Get the absolute path to the CSV file
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(current_dir, 'Trading Agent', 'Low-risk stock list.csv')
+        
+        # Read and return the CSV file
+        with open(csv_path, 'r', encoding='utf-8') as file:
+            return file.read()
+    except Exception as e:
+        print(f"Error reading CSV file: {str(e)}")
+        return jsonify({"error": "Failed to read CSV file"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

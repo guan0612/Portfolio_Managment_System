@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from layers import GraphAttentionLayer
+from .layers import GraphAttentionLayer
 
 ################################
 ###    GAT NETWORK MODULE    ###
