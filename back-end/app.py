@@ -32,6 +32,7 @@ def gat(date):
         return jsonify({"error": str(e)}), 500
 
 
+
 @app.route('/trading-performance', methods=['GET'])
 def trading_performance():
     # 讀取交易行為和帳戶價值數據
@@ -62,5 +63,23 @@ def trading_performance():
         "stocks": actions_df.columns[1:].tolist()  # 獲取股票代碼列表
     })
 
+@app.route('/api/low-risk-stocks', methods=['GET'])
+def get_low_risk_stocks():
+    try:
+        # Get the absolute path to the CSV file
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(current_dir, 'Trading Agent', 'Low-risk stock list.csv')
+        
+        # Read and return the CSV file
+        with open(csv_path, 'r', encoding='utf-8') as file:
+            return file.read()
+    except Exception as e:
+        print(f"Error reading CSV file: {str(e)}")
+        return jsonify({"error": "Failed to read CSV file"}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
