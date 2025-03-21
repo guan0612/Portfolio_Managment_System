@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { Card, Slider, Switch, Space, Input, Button, Select } from 'antd';
+import { Card, Slider, Switch, Space, Button, Select } from 'antd';
 import '../style/StockRelationGraph.css';
 import { stockNames } from '../data/stockNames';
 import { stockIndustries, getAllIndustries } from '../data/stockIndustries';
@@ -11,9 +11,9 @@ const { Option } = Select;
 const StockRelationGraph = () => {
     const [graphData, setGraphData] = useState({ nodes: [], links: [] });
     const [loading, setLoading] = useState(true);
-    const [threshold, setThreshold] = useState(0.01);
+    const [threshold, setThreshold] = useState(0.0330);
     const [showLabels, setShowLabels] = useState(true);
-    const [searchCode, setSearchCode] = useState('');
+    const [selectedStock, setSelectedStock] = useState('1101');
     const [highlightedNodes, setHighlightedNodes] = useState([]);
     const [availableDates, setAvailableDates] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
@@ -40,10 +40,9 @@ const StockRelationGraph = () => {
         return industryColors[industry] || '#7986CB'; // 預設顏色
     };
 
-    // 添加一個函數來判斷節點是否應該顯示
-    const shouldShowNode = (code) => {
-        return true;
-    };
+    useEffect(() => {
+        setSelectedStock('1101');
+    }, []);
 
     // 取得可用日期
     useEffect(() => {
@@ -57,6 +56,13 @@ const StockRelationGraph = () => {
             })
             .catch(error => console.error('Error fetching dates:', error));
     }, []);
+
+    // 監聽選擇的股票變化
+    useEffect(() => {
+        if (selectedStock) {
+            handleSearch();
+        }
+    }, [selectedStock]);
 
     // 取得圖數據
     useEffect(() => {
@@ -96,10 +102,11 @@ const StockRelationGraph = () => {
                         
                         // 遍歷該股票與其他股票的關係
                         stockCodes.forEach((targetStock, colIndex) => {
-                            if (rowIndex === colIndex) return;  // 跳過自己
+                            if (rowIndex === colIndex || rowIndex > colIndex) return;  // 跳過自己 or 跳過重複的關係
                             
                             const weight = parseFloat(row[targetStock]);
-                            if (!isNaN(weight) && weight >= threshold) {
+                            
+                            if (!isNaN(weight) && weight > 0) {
                                 nodes.add(sourceStock);
                                 nodes.add(targetStock);
                                 links.push({
@@ -119,15 +126,15 @@ const StockRelationGraph = () => {
                     console.log('Number of links:', links.length);
                     console.log('Sample nodes:', Array.from(nodes).slice(0, 5));
                     console.log('Sample links:', links.slice(0, 5));
+                    console.log('all links:', links);
 
                     if (nodes.size > 0) {
                         setGraphData({
                             nodes: Array.from(nodes).map(code => ({
                                 name: code,
                                 value: links.filter(link => 
-                                    link.source === code || link.target === code
+                                    (link.source === code || link.target === code) && link.value > 0 
                                 ).length,
-                                symbolSize: 30,
                                 category: getStockIndustry(code)
                             })),
                             links: links
@@ -143,12 +150,31 @@ const StockRelationGraph = () => {
     }, [selectedDate, threshold]);
 
     const handleSearch = () => {
-        if (!searchCode) return;
+        // 清除之前的高亮狀態
+        setHighlightedNodes([]);
+
+        // 驗證輸入
+        if (!selectedStock) {
+            console.warn('Please select a stock');
+            return;
+        }
+
+        // 檢查股票是否存在於圖表中
+        const stockExists = graphData.nodes.some(node => node.name === selectedStock);
+        if (!stockExists) {
+            console.warn(`Stock ${selectedStock} not found in the graph`);
+            return;
+        }
 
         // 找出與搜索股票相關的所有連接
         const relatedLinks = graphData.links.filter(link => 
-            link.source === searchCode || link.target === searchCode
+            (link.source === selectedStock || link.target === selectedStock) && link.value >= threshold  // 只顯示符合閥值的連接
         );
+
+        if (relatedLinks.length === 0) {
+            console.warn(`Stock ${selectedStock} has no connections above threshold (${threshold})`);
+            return;
+        }
 
         // 取得相關節點
         const relatedNodes = new Set();
@@ -159,13 +185,15 @@ const StockRelationGraph = () => {
 
         setHighlightedNodes(Array.from(relatedNodes));
 
-        // 打印相關信息
-        console.log(`股票 ${searchCode} (${getCompanyName(searchCode)}) 的相關連接：`);
-        relatedLinks.forEach(link => {
-            const sourceName = getCompanyName(link.source);
-            const targetName = getCompanyName(link.target);
-            console.log(`${link.source} (${sourceName}) → ${link.target} (${targetName}): ${link.value.toFixed(4)}`);
-        });
+        // 打印相關信息，按照相關度排序
+        console.log(`Stock ${selectedStock} (${getCompanyName(selectedStock)}) connections:`);
+        relatedLinks
+            .sort((a, b) => b.value - a.value)  // 依相關度從高到低排序
+            .forEach(link => {
+                const sourceName = getCompanyName(link.source);
+                const targetName = getCompanyName(link.target);
+                console.log(`${link.source} (${sourceName}) → ${link.target} (${targetName}): ${link.value.toFixed(4)}`);
+            });
     };
 
     const getOption = () => {
@@ -219,15 +247,15 @@ const StockRelationGraph = () => {
                     min: 0.1,
                     max: 5
                 },
-                data: graphData.nodes.map(node => ({
-                    ...node,
-                    symbolSize: Math.max(20, Math.min(50, 20 + node.value)),
-                    itemStyle: {
-                        color: highlightedNodes.length === 0 || highlightedNodes.includes(node.name)
-                            ? getIndustryColor(node.name)
-                            : '#cccccc'
-                    }
-                })),
+                data: graphData.nodes
+                    .filter(node => highlightedNodes.length === 0 || highlightedNodes.includes(node.name))
+                    .map(node => ({
+                        ...node,
+                        symbolSize: Math.max(20, Math.min(50, 20 + node.value)),  // 根據連結數調整節點大小
+                        itemStyle: {
+                            color: getIndustryColor(node.name)
+                        }
+                    })),
                 categories: allIndustries.map(industry => ({
                     name: industry,
                     itemStyle: {
@@ -241,17 +269,25 @@ const StockRelationGraph = () => {
                     friction: 0.6,
                     layoutAnimation: true
                 },
-                edges: graphData.links.map(link => ({
-                    ...link,
-                    lineStyle: {
-                        width: Math.max(1, link.value * 5),
-                        opacity: highlightedNodes.length === 0 || 
-                            (highlightedNodes.includes(link.source) && highlightedNodes.includes(link.target))
-                            ? Math.min(link.value * 2, 1)
-                            : 0.1,
-                        curveness: 0.1
+                edges: graphData.links
+                    .filter(link => 
+                        highlightedNodes.length === 0 || 
+                        (highlightedNodes.includes(link.source) && highlightedNodes.includes(link.target))
+                    )
+                    .map(link => ({
+                        ...link,
+                        lineStyle: {
+                            width: 3,
+                            opacity: Math.min(link.value * 2, 1),
+                            curveness: 0.1
+                        },
+                        emphasis: {
+                            lineStyle: {
+                            width: 6,
+                            opacity: 1
+                        }
                     }
-                })),
+                    })),
                 label: {
                     show: showLabels,
                     position: 'right',
@@ -273,26 +309,29 @@ const StockRelationGraph = () => {
                             options={availableDates.map(date => ({ value: date, label: date }))}
                             placeholder="選擇日期"
                         />
-                        <Input
-                            style={{ width: 120 }}
-                            placeholder="輸入股票代碼"
-                            value={searchCode}
-                            onChange={e => setSearchCode(e.target.value)}
+                        <Select
+                            style={{ width: 200 }}
+                            value={selectedStock}
+                            onChange={setSelectedStock}
+                            options={Object.keys(stockNames).map(code => ({
+                                value: code.replace('.TW', ''),
+                                label: `${code.replace('.TW', '')} - ${stockNames[code]}`
+                            }))}
+                            placeholder="選擇股票代碼"
                         />
-                        <Button onClick={handleSearch}>搜尋</Button>
                         <span>閾值: {threshold}</span>
                         <Slider
                             style={{ width: 200 }}
                             min={0}
-                            max={0.1}
-                            step={0.001}
+                            max={0.1000}
+                            step={0.0001}
                             value={threshold}
                             onChange={setThreshold}
                         />
                     </Space>
                     <div className="graph-content">
                         {loading ? (
-                            <div className="loading">加載中...</div>
+                            <div className="loading">loading...</div>
                         ) : (
                             <ReactECharts
                                 option={getOption()}
