@@ -13,10 +13,6 @@ function App() {
       <Sidenav />
       <main className="main-content">
         <Routes>
-          <Route path="/" element={<Introduction />} />
-          <Route path="/introduction-cards" element={<IntroductionCards />} />
-          <Route path="/introduction-flow" element={<IntroductionFlow />} />
-          <Route path="/introduction-tabs" element={<IntroductionTabs />} />
           <Route path="/introduction-bento" element={<IntroductionBento />} />
           <Route path="/stock-graph" element={<StockGraph />} />
           <Route path="/trading-strategy" element={<TradingStrategy />} />
