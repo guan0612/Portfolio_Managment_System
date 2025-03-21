@@ -29,14 +29,41 @@ def convert_daily_return_to_pyfolio_ts(df):
     return pd.Series(strategy_ret["daily_return"].values, index=strategy_ret.index)
 
 
+def calculate_stats(returns):
+    """Calculate various trading statistics."""
+    total_return = (returns + 1).prod() - 1
+    annual_return = (1 + total_return) ** (252 / len(returns)) - 1
+    daily_std = returns.std()
+    annual_std = daily_std * np.sqrt(252)
+    sharpe_ratio = annual_return / annual_std if annual_std != 0 else 0
+    
+    # Calculate max drawdown
+    cum_returns = (1 + returns).cumprod()
+    rolling_max = cum_returns.expanding(min_periods=1).max()
+    drawdowns = cum_returns / rolling_max - 1
+    max_drawdown = drawdowns.min()
+    
+    # Calculate Sortino ratio using -np.inf instead of np.NINF
+    downside_returns = returns[returns < 0]
+    downside_std = np.sqrt(252) * np.sqrt(np.mean(downside_returns**2))
+    sortino_ratio = annual_return / downside_std if downside_std != 0 else 0
+    
+    stats = {
+        'Annual return': annual_return,
+        'Cumulative returns': total_return,
+        'Annual volatility': annual_std,
+        'Sharpe ratio': sharpe_ratio,
+        'Sortino ratio': sortino_ratio,
+        'Max drawdown': max_drawdown
+    }
+    
+    return pd.Series(stats)
+
+
 def backtest_stats(account_value, value_col_name="account_value"):
+    """Calculate and display trading performance statistics."""
     dr_test = get_daily_return(account_value, value_col_name=value_col_name)
-    perf_stats_all = timeseries.perf_stats(
-        returns=dr_test,
-        positions=None,
-        transactions=None,
-        turnover_denom="AGB",
-    )
+    perf_stats_all = calculate_stats(dr_test)
     print(perf_stats_all)
     return perf_stats_all
 

@@ -1,0 +1,95 @@
+.trading-performance-container {
+  padding: 20px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.summary-section {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 200px;
+  text-align: center;
+}
+
+.return-value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.positive {
+  color: #4caf50;
+}
+
+.negative {
+  color: #f44336;
+}
+
+.chart-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.actions-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.date-selector {
+  margin-bottom: 20px;
+}
+
+.date-selector select {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  margin-left: 10px;
+}
+
+.actions-table {
+  margin-top: 30px;
+}
+
+.actions-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.actions-table th, .actions-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.actions-table th {
+  background-color: #f5f5f5;
+}
+
+.buy {
+  color: #4caf50;
+}
+
+.sell {
+  color: #f44336;
+}
+
+.trading-performance-loading, .trading-performance-error {
+  text-align: center;
+  padding: 50px;
+  font-size: 18px;
+}
+
+.trading-performance-error {
+  color: #f44336;
+}

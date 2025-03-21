@@ -68,3 +68,33 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+# Front-end Structure
+
+```front-end/
+├── public/
+├── src/
+│   ├── components/              # 功能組件
+│   │   ├── MarkdownRenderer.js  # Markdown渲染
+│   │   └── Sidenav.js          # 側邊導覽menu
+│   │
+│   ├── pages/                   # 頁面
+│   │   ├── Introduction.js      # 專案介紹
+│   │   ├── StockRelationGraph.js # 各股關係Graph
+│   │   └── TradingStrategy.js   # 交易策略
+│   │
+│   ├── style/                   # 樣式
+│   │   ├── App.css
+│   │   ├── index.css
+│   │   ├── MarkdownRenderer.css
+│   │   ├── Sidenav.css
+│   │   ├── Introduction.css
+│   │   ├── StockRelationGraph.css
+│   │   └── TradingStrategy.css
+│   │
+│   ├── App.js                   # web主頁
+│   └── index.js                 # web入口(引入App.js)
+│
+├── package.json                 # 專案依賴項配置
+├── package-lock.json            # 管理鎖定依賴包
+└── README.md                    # 說明文件
