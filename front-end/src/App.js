@@ -6,7 +6,7 @@ import StockGraph from './pages/StockRelationGraph';
 import TradingStrategy from './pages/TradingStrategy';
 import Settings from './pages/Settings';
 import TradingPerformance from './pages/TradingPerformance';
-import StockCorrelationAnalysis from './pages/StockCorrelationAnalysis';
+import StockRelationAnalysis from './pages/StockRelationAnalysis';
 import './style/App.css';
 
 function App() {
@@ -20,7 +20,7 @@ function App() {
           <Route path="/trading-strategy" element={<TradingStrategy />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/trading-performance" element={<TradingPerformance />} />
-          <Route path="/stock-correlation" element={<StockCorrelationAnalysis />} />
+          <Route path="/stock-relation" element={<StockRelationAnalysis />} />
         </Routes>
       </main>
     </div>

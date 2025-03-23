@@ -4,6 +4,7 @@ import ReactECharts from 'echarts-for-react';
 import { stockNames } from '../data/stockNames';
 import { stockIndustries, getAllIndustries } from '../data/stockIndustries';
 import { industryColors } from '../data/industryColors';
+import '../style/StockRelationAnalysis.css';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -16,43 +17,25 @@ const colorSchemes = {
     purple: ['#f2f0f7', '#dadaeb', '#bcbddc', '#9e9ac8', '#756bb1', '#54278f'],
     spectral: ['#d73027', '#fc8d59', '#fee090', '#e0f3f8', '#91bfdb', '#4575b4'],
     rainbow: ['#d53e4f', '#f46d43', '#fdae61', '#fee08b', '#e6f598', '#abdda4', '#66c2a5', '#3288bd'],
-    highlight: ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#b10026'],
-    precision: ['#f7fcfd', '#e0ecf4', '#bfd3e6', '#9ebcda', '#8c96c6', '#8c6bb1', '#88419d', '#6e016b'] // 專為精細差異設計
+    hot: ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#b10026'],
+    precision: ['#f7fcfd', '#e0ecf4', '#bfd3e6', '#9ebcda', '#8c96c6', '#8c6bb1', '#88419d', '#6e016b'],
+    viridis: ['#440154', '#433982', '#30678D', '#218F8B', '#36B677', '#8ED542', '#FDE725'],
+    plasma: ['#0D0887', '#5B02A3', '#9A179B', '#CB4678', '#EB7852', '#FBB32F', '#F0F921'],
+    inferno: ['#000004', '#320A5A', '#781B6C', '#BB3654', '#EC6824', '#FBB41A', '#FCFFA4'],
+    magma: ['#000004', '#2C115F', '#721F81', '#B63679', '#F1605D', '#FEAF77', '#FCFDBF']
 };
 
-// 定義幾種預設的可視化方案
+// 簡化視覺化預設方案，但保留必要參數
 const visualPresets = {
     default: {
         name: '標準視圖',
         description: '適合一般資料瀏覽，均衡顯示整體分佈',
         normalizeMethod: 'linear',
-        colorScheme: 'green',
-        contrastLevel: 2
-    },
-    gat_precise: {
-        name: 'GAT精細視圖',
-        description: '優化顯示0.033-0.034區間內的細微差異',
-        normalizeMethod: 'gat_special',
-        colorScheme: 'precision',
-        contrastLevel: 5
-    },
-    value_contrast: {
-        name: '高對比視圖',
-        description: '突顯數值差異，適合發現異常關聯',
-        normalizeMethod: 'zscore',
-        colorScheme: 'rainbow',
-        contrastLevel: 4
-    },
-    structure: {
-        name: '結構視圖',
-        description: '以百分位數分佈呈現資料結構，突顯相對關係',
-        normalizeMethod: 'percentile',
-        colorScheme: 'spectral',
-        contrastLevel: 3
+        colorScheme: 'green'
     }
 };
 
-const StockCorrelationAnalysis = () => {
+const StockRelationAnalysis = () => {
     const [correlationData, setCorrelationData] = useState([]);
     const [availableDates, setAvailableDates] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
@@ -60,16 +43,14 @@ const StockCorrelationAnalysis = () => {
     const [loading, setLoading] = useState(true);
     const [stockList, setStockList] = useState([]);
     const [thresholdValue, setThresholdValue] = useState(0.0335); // 修改為更接近數據真實分佈的值
-    const [selectedVisualPreset, setSelectedVisualPreset] = useState('gat_precise'); // 預設使用GAT精細視圖
+    const [selectedVisualPreset, setSelectedVisualPreset] = useState('default'); // 預設使用標準視圖
     const [timeSeriesData, setTimeSeriesData] = useState({});
     const [timeSeriesLoading, setTimeSeriesLoading] = useState(false);
     const [topCorrelatedStocks, setTopCorrelatedStocks] = useState([]);
     const [focusedRegion, setFocusedRegion] = useState(null);
-    const [selectedColorScheme, setSelectedColorScheme] = useState(visualPresets.gat_precise.colorScheme);
-    const [contrastLevel, setContrastLevel] = useState(5); // 直接設定為最高對比度
-    const [normalizeMethod, setNormalizeMethod] = useState(visualPresets.gat_precise.normalizeMethod);
-    const [aspectRatio, setAspectRatio] = useState('square'); // 'square' 或 'auto'
-    const [displayFullscreen, setDisplayFullscreen] = useState(false); // 全屏顯示模式
+    const [selectedColorScheme, setSelectedColorScheme] = useState('green'); // 預設色階為green
+    const [normalizeMethod, setNormalizeMethod] = useState('linear'); // 恢復這個狀態變數
+    const [showOnlyNonZero, setShowOnlyNonZero] = useState(false); // 是否只顯示非零值
     
     // 獲取完整的股票代碼
     const getFullStockCode = (code) => `${code}.TW`;
@@ -240,47 +221,13 @@ const StockCorrelationAnalysis = () => {
         }
     };
     
-    // 動態計算色階範圍
+    // 簡化後的色階範圍計算函數
     const getColorRange = (stats) => {
-        const { min, max, mean, std, q1, median, q3 } = stats;
-        
-        // 針對GAT模型數據的特殊處理
-        if (normalizeMethod === 'gat_special') {
-            // 分析實際數據發現多數值集中在0.033-0.034之間
-            // 我們使用更精細的範圍劃分來突顯微小差異
-            const typicalMin = 0.0337;
-            const typicalMax = 0.0339;
-            
-            // 根據對比度級別創建非線性映射，突顯中間區域
-            const midPoint = (typicalMin + typicalMax) / 2;
-            const range = (typicalMax - typicalMin) / 2;
-            
-            // 動態調整範圍，高對比度時範圍縮小，更聚焦於中心值
-            const adjustedRange = range / (contrastLevel * 0.5);
-            
-            return {
-                min: typicalMin - adjustedRange,
-                max: typicalMax + adjustedRange
-            };
-        } else if (normalizeMethod === 'percentile') {
-            // 使用百分位數進行非線性映射
-            return {
-                min: q1 - (q3 - q1) * 0.2, // 略微擴展下限
-                max: q3 + (q3 - q1) * contrastLevel // 根據對比度擴展上限
-            };
-        } else if (normalizeMethod === 'zscore') {
-            // 使用Z分數進行標準化
-            return {
-                min: mean - std * 0.8, // 擴展下限以包含更多數據
-                max: mean + std * (contrastLevel * 0.8) 
-            };
-        } else {
-            // 默認線性方法
-            return {
-                min: mean - std * 0.8,
-                max: mean + std * contrastLevel * 0.8
-            };
-        }
+        // 線性映射 - 直接使用非零值的最小值和最大值
+        return {
+            min: stats.min,
+            max: stats.max
+        };
     };
 
     // 應用可視化預設方案
@@ -288,9 +235,8 @@ const StockCorrelationAnalysis = () => {
         const preset = visualPresets[presetKey];
         if (preset) {
             setSelectedVisualPreset(presetKey);
-            setNormalizeMethod(preset.normalizeMethod);
+            setNormalizeMethod(preset.normalizeMethod); // 恢復這個設置
             setSelectedColorScheme(preset.colorScheme);
-            setContrastLevel(preset.contrastLevel);
         }
     };
 
@@ -309,15 +255,37 @@ const StockCorrelationAnalysis = () => {
         // 計算色階範圍
         const { min: minValue, max: maxValue } = getColorRange(stats);
         
-        // 填充數據，非零值和零值分開處理
-        xAxisData.forEach((x, i) => {
-            yAxisData.forEach((y, j) => {
-                const value = correlationData[i][y];
+        // 填充數據，確保正確讀取行列關係
+        for (let i = 0; i < xAxisData.length; i++) {
+            for (let j = 0; j < yAxisData.length; j++) {
+                // 獲取 i 行 j 列的值 - 更安全的數據存取方式
+                const stockI = xAxisData[i]; // 行對應的股票代碼
+                const stockJ = yAxisData[j]; // 列對應的股票代碼
+                
+                // 如果 correlationData[i] 存在且有 stockJ 屬性，使用該值
+                // 否則嘗試從反向關係 correlationData[j][stockI] 獲取（如果可用）
+                let value = 0;
+                if (correlationData[i] && correlationData[i].hasOwnProperty(stockJ)) {
+                    value = correlationData[i][stockJ];
+                } else if (correlationData[j] && correlationData[j].hasOwnProperty(stockI)) {
+                    // 嘗試反向查找，可能在某些API返回中很有用
+                    value = correlationData[j][stockI];
+                }
+                
+                // 根據值是否大於閾值決定是否顯示
                 if (value >= thresholdValue) {
                     data.push([i, j, value]);
                 }
-            });
-        });
+                // 特殊處理0值，確保它們都有一致的顯示
+                else if (value === 0) {
+                    data.push([i, j, minValue - 0.0001]);
+                }
+                // 其他低於閾值的非零值不顯示
+            }
+        }
+        
+        // 調試信息 - 顯示前10條數據，確認轉換是否正確
+        console.log("熱圖數據示例（前10條）:", data.slice(0, 10));
         
         // 如果有焦點區域，只顯示該區域的股票
         let showXAxisData = xAxisData;
@@ -355,28 +323,20 @@ const StockCorrelationAnalysis = () => {
             });
         }
         
-        // 計算合適的格子尺寸，確保XY軸等比例
+        // 計算熱圖的格子和容器大小，確保正方形
         const gridSize = {
             left: 120,
             right: 80,
-            bottom: 120,
+            bottom: 150,
             top: 120,
             containLabel: true
         };
-        
-        // 根據全屏模式調整大小
-        if (displayFullscreen) {
-            gridSize.left = 150;
-            gridSize.right = 100;
-            gridSize.top = 150;
-            gridSize.bottom = 150;
-        }
         
         return {
             title: {
                 text: focusedRegion ? `${focusedRegion}產業股票相關性熱圖` : '股票相關性熱圖',
                 left: 'center',
-                subtext: `視覺化方案: ${visualPresets[selectedVisualPreset].name} | 均值: ${stats.mean.toFixed(6)}, 標準差: ${stats.std.toFixed(6)} | 色階範圍: ${minValue.toFixed(6)} - ${maxValue.toFixed(6)}`
+                subtext: `視覺化方案: ${visualPresets[selectedVisualPreset]?.name || '自定義'} | 均值: ${stats.mean.toFixed(6)}, 標準差: ${stats.std.toFixed(6)} | 色階範圍: ${minValue.toFixed(6)} - ${maxValue.toFixed(6)}`
             },
             tooltip: {
                 position: 'top',
@@ -385,7 +345,11 @@ const StockCorrelationAnalysis = () => {
                     const yIndex = params.value[1];
                     const xStock = showXAxisData[xIndex];
                     const yStock = showYAxisData[yIndex];
-                    return `${xStock} (${getCompanyName(xStock)}) → ${yStock} (${getCompanyName(yStock)})<br/>相關度: ${params.value[2].toFixed(6)}`;
+                    // 安全地檢查值是否存在且可以格式化
+                    const correlationValue = params.value[2] !== undefined && params.value[2] !== null
+                        ? params.value[2].toFixed(6)
+                        : '未知';
+                    return `${xStock} (${getCompanyName(xStock)}) → ${yStock} (${getCompanyName(yStock)})<br/>相關度: ${correlationValue}`;
                 }
             },
             toolbox: {
@@ -474,14 +438,16 @@ const StockCorrelationAnalysis = () => {
                     }
                 },
                 itemStyle: {
-                    borderWidth: aspectRatio === 'square' ? 1 : 0,
+                    borderWidth: 1,
                     borderColor: 'rgba(255, 255, 255, 0.2)'
                 },
-                // 保持正方形格子
-                aspectScale: 1,
-                // 使用更高級的配置來確保正方形
-                layoutCenter: ['50%', '50%'],
-                layoutSize: '100%'
+                aspectScale: 1, // 確保使用正方形格子
+                emphasis: {
+                    itemStyle: {
+                        borderColor: '#333',
+                        borderWidth: 1
+                    }
+                }
             }]
         };
     };
@@ -516,15 +482,16 @@ const StockCorrelationAnalysis = () => {
         const mean = nonZeroValues.reduce((a, b) => a + b, 0) / nonZeroValues.length;
         const std = Math.sqrt(nonZeroValues.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / nonZeroValues.length);
         
-        // 計算y軸範圍，針對GAT數據集中在0.033左右的特點優化
-        const minY = Math.max(0, mean - std * 2);
-        const maxY = mean + std * 3;
-        
         // 為每個相關股票準備數據
         topCorrelatedStocks.forEach(relatedStock => {
-            const stockValues = dates.map(date => {
+            let stockValues = dates.map(date => {
+                return stockData[date][relatedStock] || 0;
+            });
+            
+            // 在"只看非零值變化"模式下，我們仍然繪製所有點，但將特殊標記應用於非零值
+            const symbolSizes = dates.map(date => {
                 const value = stockData[date][relatedStock];
-                return value ? value : null; // 使用null而非0，讓零值被視為斷點
+                return value > 0 ? 8 : (showOnlyNonZero ? 0 : 4); // 非零值點大，零值點小或隱藏
             });
             
             series.push({
@@ -532,16 +499,14 @@ const StockCorrelationAnalysis = () => {
                 type: 'line',
                 data: stockValues,
                 smooth: true,
+                connectNulls: true, // 連接NULL值點
                 symbol: 'circle',
-                symbolSize: 8,
+                symbolSize: function(value, params) {
+                    return symbolSizes[params.dataIndex];
+                },
                 lineStyle: {
                     width: 3
                 },
-                // 增加區域填充效果，增強視覺表現
-                areaStyle: {
-                    opacity: 0.2
-                },
-                // 強調選中效果
                 emphasis: {
                     itemStyle: {
                         shadowBlur: 10,
@@ -550,6 +515,24 @@ const StockCorrelationAnalysis = () => {
                 }
             });
         });
+        
+        // 根據當前模式設置適當的Y軸範圍
+        let yAxisOption = {};
+        if (showOnlyNonZero) {
+            // 只顯示非零值模式 - 聚焦在非零值範圍
+            const minY = Math.max(0, mean - std * 1.5);
+            const maxY = mean + std * 2;
+            yAxisOption = {
+                min: minY,
+                max: maxY
+            };
+        } else {
+            // 顯示所有值模式 - 包含0
+            yAxisOption = {
+                min: 0,
+                max: mean + std * 2
+            };
+        }
         
         return {
             title: {
@@ -561,7 +544,11 @@ const StockCorrelationAnalysis = () => {
                 formatter: function(params) {
                     let result = `日期: ${params[0].name}<br/>`;
                     params.forEach(param => {
-                        result += `${param.seriesName}: ${param.value ? param.value.toFixed(6) : '無數據'}<br/>`;
+                        // 安全地檢查 param.value 是否存在且不是 undefined 或 null
+                        const valueDisplay = param.value !== undefined && param.value !== null 
+                            ? param.value.toFixed(6) 
+                            : '無數據';
+                        result += `${param.seriesName}: ${valueDisplay}<br/>`;
                     });
                     return result;
                 }
@@ -591,9 +578,7 @@ const StockCorrelationAnalysis = () => {
                 axisLabel: {
                     formatter: (value) => value.toFixed(6)
                 },
-                // 針對GAT模型數據特性優化Y軸範圍
-                min: minY,
-                max: maxY
+                ...yAxisOption
             },
             series: series,
             toolbox: {
@@ -607,7 +592,7 @@ const StockCorrelationAnalysis = () => {
                 right: 20,
                 top: 20
             },
-            // 增加數據縮放功能，方便查看局部細節
+            // 只保留X軸的縮放功能，移除Y軸的縮放功能
             dataZoom: [
                 {
                     type: 'inside',
@@ -617,26 +602,11 @@ const StockCorrelationAnalysis = () => {
                     filterMode: 'filter'
                 },
                 {
-                    type: 'inside',
-                    start: 0,
-                    end: 100,
-                    yAxisIndex: [0],
-                    filterMode: 'filter'
-                },
-                {
                     type: 'slider',
                     show: true,
                     start: 0,
                     end: 100,
                     xAxisIndex: [0]
-                },
-                {
-                    type: 'slider',
-                    show: true,
-                    start: 0,
-                    end: 100,
-                    yAxisIndex: [0],
-                    left: '93%'
                 }
             ]
         };
@@ -836,11 +806,11 @@ const StockCorrelationAnalysis = () => {
 
     // 渲染組件
     return (
-        <div style={{ padding: '20px' }}>
-            <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>股票關係多維度分析</h1>
+        <div className="stock-correlation-container">
+            <h1 className="page-title">股票關係多維度分析</h1>
             
             <Card style={{ marginBottom: '20px' }}>
-                <Space style={{ marginBottom: '20px', flexWrap: 'wrap' }}>
+                <Space className="control-panel">
                     <span>選擇日期：</span>
                     <Select 
                         style={{ width: 200 }} 
@@ -892,12 +862,12 @@ const StockCorrelationAnalysis = () => {
                     <p>
                         <strong>產業篩選：</strong> 點擊以下產業標籤可查看該產業內股票的關聯熱圖
                     </p>
-                    <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div className="industry-tags">
                         {getIndustryStats().map(industry => (
                             <Tag 
                                 color={industryColors[industry.name] || '#7986CB'} 
                                 key={industry.name}
-                                style={{ cursor: 'pointer', padding: '4px 8px' }}
+                                className="industry-tag"
                                 onClick={() => setFocusedRegion(industry.name)}
                             >
                                 {industry.name} ({industry.count})
@@ -910,56 +880,65 @@ const StockCorrelationAnalysis = () => {
             <Tabs defaultActiveKey="1">
                 <TabPane tab="相關性熱圖" key="1">
                     <Card>
-                        <div style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
+                        <div className="control-group">
                             <Tooltip title="關聯閾值用於過濾數據，只有高於此閾值的相關性才會被顯示。較高閾值可突顯重要關聯，較低閾值可展示更多資訊。">
                                 <span>關聯閾值：{thresholdValue.toFixed(6)}</span>
                             </Tooltip>
                             <Slider
-                                style={{ width: 200 }}
+                                className="slider-control"
                                 min={0.0330}
                                 max={0.0345}
                                 step={0.0001}
                                 value={thresholdValue}
                                 onChange={setThresholdValue}
                                 marks={{
-                                    0.0330: '全部',
-                                    0.0337: '中等',
-                                    0.0345: '顯著'
+                                    0.0330: 'All',
+                                    0.0337: 'Medium',
+                                    0.0345: 'High'
                                 }}
                             />
                             
-                            <span>格子形狀：</span>
-                            <Switch
-                                checkedChildren="正方形"
-                                unCheckedChildren="自動"
-                                checked={aspectRatio === 'square'}
-                                onChange={(checked) => setAspectRatio(checked ? 'square' : 'auto')}
-                            />
+                            <Divider type="vertical" />
                             
-                            <Button 
-                                type={displayFullscreen ? "primary" : "default"}
-                                onClick={() => setDisplayFullscreen(!displayFullscreen)}
-                                icon="fullscreen"
+                            <span>Color Scheme：</span>
+                            <Select
+                                style={{ width: 120 }}
+                                value={selectedColorScheme}
+                                onChange={(value) => {
+                                    setSelectedColorScheme(value);
+                                    setSelectedVisualPreset('default');
+                                }}
                             >
-                                {displayFullscreen ? "退出全屏" : "全屏顯示"}
-                            </Button>
+                                <Option value="green">Green</Option>
+                                <Option value="blue">Blue</Option>
+                                <Option value="red">Red</Option>
+                                <Option value="purple">Purple</Option>
+                                <Option value="spectral">Spectral</Option>
+                                <Option value="rainbow">Rainbow</Option>
+                                <Option value="precision">Precision</Option>
+                                <Option value="viridis">Viridis</Option>
+                                <Option value="plasma">Plasma</Option>
+                                <Option value="inferno">Inferno</Option>
+                                <Option value="magma">Magma</Option>
+                            </Select>
                         </div>
                         
-                        <div style={{ height: displayFullscreen ? '900px' : '800px', width: '100%', position: 'relative' }}>
+                        <div id="heatmap-container" className="heatmap-container">
                             {loading ? (
-                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                <div className="loading-spinner">
                                     <Spin size="large" />
                                 </div>
                             ) : (
                                 <ReactECharts 
                                     option={getHeatmapOption()} 
-                                    style={{ height: '100%', width: '100%', position: 'absolute', top: 0, left: 0 }}
+                                    className="heatmap-wrapper"
                                     opts={{ renderer: 'canvas' }}
                                     notMerge={true}
+                                    style={{ height: '1200px', width: '100%' }}
                                 />
                             )}
                         </div>
-                        <div style={{ marginTop: '20px' }}>
+                        <div className="guide-section">
                             <h3>熱圖解讀指南</h3>
                             <ul>
                                 <li>顏色越深表示兩支股票的相關性越強，從柔和到深色的變化表示相關性強度的增加</li>
@@ -985,9 +964,23 @@ const StockCorrelationAnalysis = () => {
                                 showIcon
                             />
                         </div>
-                        <div style={{ height: '700px' }}>
+                        <div style={{ marginBottom: '20px' }}>
+                            <Space>
+                                <span>顯示模式：</span>
+                                <Switch
+                                    checkedChildren="只看非零值變化"
+                                    unCheckedChildren="顯示完整數據"
+                                    checked={showOnlyNonZero}
+                                    onChange={(checked) => setShowOnlyNonZero(checked)}
+                                />
+                                <Tooltip title="「顯示完整數據」模式顯示所有數據包括零值；「只看非零值變化」模式會自動調整Y軸範圍，聚焦在非零數據的變化趨勢上，但會連接所有數據點">
+                                    <Button icon="info-circle" type="link">說明</Button>
+                                </Tooltip>
+                            </Space>
+                        </div>
+                        <div className="timeseries-container">
                             {timeSeriesLoading ? (
-                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                <div className="loading-spinner">
                                     <Spin size="large" tip="正在獲取歷史相關性數據..." />
                                 </div>
                             ) : (
@@ -999,17 +992,17 @@ const StockCorrelationAnalysis = () => {
                                 />
                             )}
                         </div>
-                        <div style={{ marginTop: '20px' }}>
+                        <div className="guide-section">
                             <h3>時間序列圖解讀指南</h3>
                             <ul>
                                 <li>線圖顯示所選股票與其他關聯度最高的5支股票間的關聯強度隨時間變化</li>
-                                <li>Y軸範圍經過優化，集中在0.033左右，以更好地顯示GAT模型數據的微小變化</li>
-                                <li>零值會在圖表中顯示為線條中斷點，表示該日期沒有關聯數據</li>
+                                <li>「顯示所有數據」模式下，Y軸從0開始，完整展示數據範圍</li>
+                                <li>「只顯示非零值」模式下，聚焦於非零數據的微小變化，更容易觀察趨勢差異</li>
+                                <li>零值會在「只顯示非零值」模式中顯示為線條中斷點</li>
                                 <li>數據來源為過去10個可用日期的GAT模型輸出結果，真實反映市場結構變化</li>
                                 <li>關聯強度急劇變化通常表示市場結構變化，可能與重大事件相關</li>
                                 <li>關聯性下降可能意味著分散投資的良機，而上升可能表示風險聚集</li>
                                 <li>觀察相同產業和不同產業股票的關聯變化趨勢，可發現更深層的市場規律</li>
-                                <li>顯示的5支股票是基於當前選擇日期的關聯度排名，因此在不同日期可能會有所不同</li>
                                 <li>您可以使用滑鼠拖拽來選擇區域進行放大，查看細微的變化</li>
                             </ul>
                         </div>
@@ -1020,7 +1013,7 @@ const StockCorrelationAnalysis = () => {
                     <Card>
                         <h3>與 {selectedStock} ({getCompanyName(selectedStock)}) 關聯度最高的股票</h3>
                         
-                        <h4 style={{ marginTop: '20px' }}>股票關聯排行</h4>
+                        <h4 className="correlation-title">股票關聯排行</h4>
                         <Table 
                             columns={columns.filter(col => col.key !== 'industryRatio')} 
                             dataSource={(getTopCorrelationsForStock(selectedStock).stocks || []).map((item, index) => ({...item, key: index}))}
@@ -1028,7 +1021,7 @@ const StockCorrelationAnalysis = () => {
                             loading={loading}
                         />
                         
-                        <h4 style={{ marginTop: '20px' }}>產業分布統計</h4>
+                        <h4 className="industry-section">產業分布統計</h4>
                         <Table 
                             columns={industryColumns} 
                             dataSource={getTopCorrelationsForStock(selectedStock).industries || []}
@@ -1037,7 +1030,7 @@ const StockCorrelationAnalysis = () => {
                             style={{ marginBottom: '20px' }}
                         />
                         
-                        <div style={{ marginTop: '20px' }}>
+                        <div className="guide-section">
                             <h3>排行榜解讀指南</h3>
                             <ul>
                                 <li>表格列出與所選股票關聯度最高的其他股票及其產業分布情況</li>
@@ -1055,4 +1048,4 @@ const StockCorrelationAnalysis = () => {
     );
 };
 
-export default StockCorrelationAnalysis; 
+export default StockRelationAnalysis; 

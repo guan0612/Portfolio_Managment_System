@@ -1,0 +1,113 @@
+/* 股票關聯分析頁面樣式 */
+
+.stock-correlation-container {
+  padding: 20px;
+}
+
+.page-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.control-panel {
+  margin-bottom: 20px;
+}
+
+.industry-tags {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.industry-tag {
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.control-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.heatmap-container {
+  width: 100%;
+  position: relative;
+  height: 1200px;
+  margin-bottom: 20px;
+}
+
+.heatmap-wrapper {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* 確保熱圖的每個格子是正方形 */
+.heatmap-wrapper rect {
+  shape-rendering: crispEdges; /* 使邊緣更清晰 */
+}
+
+/* ECharts 熱圖容器 */
+.echarts-for-react {
+  padding-bottom: 20px;
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.timeseries-container {
+  height: 700px;
+}
+
+.guide-section {
+  margin-top: 20px;
+}
+
+.industry-section {
+  margin-top: 20px;
+}
+
+.correlation-title {
+  margin-top: 20px;
+}
+
+.slider-control {
+  width: 200px;
+}
+
+/* 色階選擇器樣式 */
+.color-scheme-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.color-scheme-option {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s;
+}
+
+.color-scheme-option.active {
+  border-color: #1890ff;
+  transform: scale(1.1);
+}
+
+/* 時間序列顯示模式切換 */
+.display-mode-toggle {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+} 
