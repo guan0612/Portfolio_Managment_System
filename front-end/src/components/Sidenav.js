@@ -6,9 +6,10 @@ const Sidenav = () => {
   const menuItems = [
     { to: '/introduction-bento', icon: '📖', text: 'Introduction' },
     { to: '/stock-graph', icon: '🕸️', text: 'Stock Relation Graph' },
+    { to: '/stock-correlation', icon: '🔍', text: 'Stock Relationship Analysis' },
     { to: '/trading-strategy', icon: '💰', text: 'Trading Strategy' },
+    { to: '/trading-performance', icon: '📈', text: 'Trading Performance' },
     { to: '/settings', icon: '⚙️', text: 'Settings' },
-    { to: '/trading-performance', icon: '📈', text: 'Trading Performance' }, // 新增這一行
   ];
 
   return (
