@@ -5,8 +5,8 @@ import { Link } from 'react-router-dom';
 const Sidenav = () => {
   const menuItems = [
     { to: '/introduction-bento', icon: '📖', text: 'Introduction' },
-    { to: '/stock-graph', icon: '🕸️', text: 'Stock Relation Graph' },
-    { to: '/stock-relation', icon: '🔍', text: 'Stock Relation Analysis' },
+    { to: '/stock-relation-graph', icon: '🕸️', text: 'Stock Relation Graph' },
+    { to: '/stock-relation-analysis', icon: '🔍', text: 'Stock Relation Analysis' },
     { to: '/trading-strategy', icon: '💰', text: 'Trading Strategy' },
     { to: '/trading-performance', icon: '📈', text: 'Trading Performance' },
     { to: '/settings', icon: '⚙️', text: 'Settings' },

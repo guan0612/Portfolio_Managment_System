@@ -52,7 +52,13 @@ const IntroductionBento = () => {
               <div className="flow-stage">
                 <div className="stage-number">1</div>
                 <div className="stage-content">
-                  <h3>GAT Network</h3>
+                  <h3>
+                    GAT Network
+                    <div className="module-links">
+                      <a href="/stock-relation-graph" className="module-link-button">查看關係圖</a>
+                      <a href="/stock-relation-analysis" className="module-link-button">查看分析</a>
+                    </div>
+                  </h3>
                   <p>Analyzes stock relationships through financial reports</p>
                   <div className="tech-details">
                     <span className="tech-label">Input:</span> Quarterly financial reports with 19 key metrics from 74 stocks
@@ -66,7 +72,12 @@ const IntroductionBento = () => {
               <div className="flow-stage">
                 <div className="stage-number">2</div>
                 <div className="stage-content">
-                  <h3>Stock Selection Agent (PPO)</h3>
+                  <h3>
+                    Stock Selection Agent (PPO)
+                    <div className="module-links">
+                      <a href="/trading-strategy" className="module-link-button">查看策略</a>
+                    </div>
+                  </h3>
                   <p>Creates a low-risk portfolio using the GAT network insights</p>
                   <div className="tech-details">
                     <span className="tech-label">Input:</span> Stock relationships and financial metrics
@@ -113,7 +124,12 @@ const IntroductionBento = () => {
               <div className="flow-stage">
                 <div className="stage-number">4</div>
                 <div className="stage-content">
-                  <h3>Trading Agent (PPO)</h3>
+                  <h3>
+                    Trading Agent (PPO)
+                    <div className="module-links">
+                      <a href="/trading-performance" className="module-link-button">查看績效</a>
+                    </div>
+                  </h3>
                   <p>Optimizes daily trading within the selected portfolio</p>
                   <div className="tech-details">
                     <span className="tech-label">Input:</span> Market patterns, current holdings, and available cash
@@ -128,7 +144,12 @@ const IntroductionBento = () => {
             
             <div className="final-output">
               <div className="output-box">
-                <h3>Final Output</h3>
+                <h3>
+                  Final Output
+                  <div className="module-links light">
+                    <a href="/trading-performance" className="module-link-button">查看績效</a>
+                  </div>
+                </h3>
                 <p>Optimized trading decisions that balance risk and return</p>
                 <ul>
                   <li>Minimized risk through stock selection</li>
@@ -142,7 +163,13 @@ const IntroductionBento = () => {
         <div className="bento-item module-gat">
           <div className="module-header">
             <div className="module-icon">📊</div>
-            <h2>Stock Relationships</h2>
+            <h2>
+              Stock Relationships
+              <div className="module-links">
+                <a href="/stock-relation-graph" className="module-link-button small">關係圖</a>
+                <a href="/stock-relation-analysis" className="module-link-button small">分析</a>
+              </div>
+            </h2>
           </div>
           <p>Discovers hidden connections between stocks by analyzing financial reports, revealing which companies influence each other in the market.</p>
           <div className="io-panel">
@@ -160,7 +187,12 @@ const IntroductionBento = () => {
         <div className="bento-item module-stock-picked">
           <div className="module-header">
             <div className="module-icon">🎯</div>
-            <h2>Portfolio Builder</h2>
+            <h2>
+              Portfolio Builder
+              <div className="module-links">
+                <a href="/trading-strategy" className="module-link-button small">查看策略</a>
+              </div>
+            </h2>
           </div>
           <p>Creates a low-risk investment portfolio by identifying which stocks work well together, balancing potential returns against market volatility.</p>
           <div className="io-panel">
@@ -240,7 +272,12 @@ const IntroductionBento = () => {
         </div>
         
         <div className="bento-item performance">
-          <h2>Performance Results</h2>
+          <h2>
+            Performance Results
+            <div className="module-links">
+              <a href="/trading-performance" className="module-link-button">詳細資訊</a>
+            </div>
+          </h2>
           <div className="performance-metrics">
             <div className="metric">
               <div className="metric-value">106.97%</div>

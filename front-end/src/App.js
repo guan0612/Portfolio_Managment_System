@@ -15,11 +15,15 @@ function App() {
       <Sidenav />
       <main className="main-content">
         <Routes>
+          <Route path="/" element={<IntroductionBento />} />
           <Route path="/introduction-bento" element={<IntroductionBento />} />
-          <Route path="/stock-graph" element={<StockGraph />} />
+          <Route path="/stock-relation-graph" element={<StockGraph />} />
+          <Route path="/stock-relation-analysis" element={<StockRelationAnalysis />} />
           <Route path="/trading-strategy" element={<TradingStrategy />} />
-          <Route path="/settings" element={<Settings />} />
           <Route path="/trading-performance" element={<TradingPerformance />} />
+          <Route path="/settings" element={<Settings />} />
+          {/* 舊路由，保留向後兼容性 */}
+          <Route path="/stock-graph" element={<StockGraph />} />
           <Route path="/stock-relation" element={<StockRelationAnalysis />} />
         </Routes>
       </main>

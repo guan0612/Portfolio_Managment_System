@@ -721,4 +721,127 @@
   .arrow-down.merge::after {
     right: -60px;
   }
+}
+
+.module-link {
+  color: inherit;
+  text-decoration: none;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.module-link:hover {
+  color: #2980b9;
+}
+
+.module-link:after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: -3px;
+  left: 0;
+  background-color: #3498db;
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease-out;
+}
+
+.module-link:hover:after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+.paper-link {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1.2rem;
+  background-color: #3498db;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.paper-link:hover {
+  background-color: #2980b9;
+}
+
+.module-links {
+  display: inline-flex;
+  gap: 0.5rem;
+  margin-left: 0.75rem;
+  vertical-align: middle;
+}
+
+.module-link-button {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  background-color: #3498db;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.module-link-button:hover {
+  background-color: #2980b9;
+}
+
+.module-link-button.small {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+}
+
+.module-links.light .module-link-button {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+.module-links.light .module-link-button:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* 調整標題區域樣式以適應連結按鈕 */
+.bento-item h2,
+.stage-content h3,
+.output-box h3 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.module-header h2 {
+  line-height: 1.8;
+}
+
+@media (max-width: 768px) {
+  .module-links {
+    margin-left: 0;
+    margin-top: 0.3rem;
+    width: 100%;
+  }
+  
+  .bento-item h2,
+  .stage-content h3,
+  .output-box h3 {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.module-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  background-color: #95a5a6;
+  color: white;
+  border-radius: 4px;
+  font-weight: 500;
+  white-space: nowrap;
 } 
