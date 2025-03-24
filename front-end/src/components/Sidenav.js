@@ -8,7 +8,6 @@ const Sidenav = () => {
     { to: '/stock-relation-graph', icon: '🕸️', text: 'Stock Relation Graph' },
     { to: '/stock-relation-analysis', icon: '🔍', text: 'Stock Relation Analysis' },
     { to: '/trading-strategy', icon: '💰', text: 'Trading Strategy' },
-    { to: '/trading-performance', icon: '📈', text: 'Trading Performance' },
     { to: '/settings', icon: '⚙️', text: 'Settings' },
   ];
 
