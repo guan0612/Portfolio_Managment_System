@@ -269,6 +269,9 @@ const StockRelationAnalysis = () => {
         console.log("熱圖統計數據:", { min, max, mean, std });
         console.log("相關數據第一行樣例:", correlationData.length > 0 ? correlationData[0] : "無數據");
         
+        // 定義統一的背景色 - 使用純白色
+        const backgroundColor = '#ffffff';
+        
         // 填充數據，完全按照CSV原始數據
         for (let i = 0; i < xAxisData.length; i++) {
             const stockI = xAxisData[i]; // 行對應的股票代碼
@@ -283,16 +286,11 @@ const StockRelationAnalysis = () => {
                     
                     // 根據值的特性處理
                     if (value !== undefined) {
-                        if (value >= thresholdValue) {
+                        if (value > 0 && value >= thresholdValue) {
                             // 對於高於閾值的非零值，正常顯示
                             data.push([i, j, value]);
-                        } else if (value === 0 && i === j) {
-                            // 對角線上的0值，保持0但使用特定顏色
-                            data.push([i, j, 0]);
-                        } else if (value === 0) {
-                            // 其他0值，可以選擇不顯示或顯示為特定顏色
-                            // 這裡選擇不顯示
-                        }
+                        } 
+                        // 不添加零值到數據中，讓它們使用統一的背景色
                     }
                 }
             }
@@ -354,15 +352,24 @@ const StockRelationAnalysis = () => {
             tooltip: {
                 position: 'top',
                 formatter: function(params) {
+                    // 檢查params.value是否為undefined或不包含必要的索引
+                    if (!params.value || params.value.length < 3) {
+                        return '無資料';
+                    }
+                    
                     const xIndex = params.value[0];
                     const yIndex = params.value[1];
+                    
+                    // 檢查索引是否有效
+                    if (xIndex === undefined || yIndex === undefined || 
+                        !showXAxisData[xIndex] || !showYAxisData[yIndex]) {
+                        return '無效的資料點';
+                    }
+                    
                     const xStock = showXAxisData[xIndex];
                     const yStock = showYAxisData[yIndex];
-                    // 如果是對角線元素，特殊處理提示文字
-                    if (xStock === yStock) {
-                        return `${xStock} (${getCompanyName(xStock)})<br/>自相關度: ${params.value[2].toFixed(6)}`;
-                    }
-                    // 普通元素正常顯示
+                    
+                    // 安全地顯示實際值
                     return `${xStock} (${getCompanyName(xStock)}) → ${yStock} (${getCompanyName(yStock)})<br/>相關度: ${params.value[2].toFixed(6)}`;
                 }
             },
@@ -377,27 +384,44 @@ const StockRelationAnalysis = () => {
                 right: 20,
                 top: 20
             },
-            grid: gridSize,
+            grid: {
+                ...gridSize,
+                backgroundColor: backgroundColor // 確保網格背景也是純白色
+            },
             xAxis: {
                 type: 'category',
                 data: showXAxisData,
-                splitArea: { show: true },
+                splitArea: { 
+                    show: true,
+                    areaStyle: {
+                        color: backgroundColor // 確保分割區域背景是純白色
+                    }
+                },
                 axisLabel: {
                     rotate: 90,
                     fontSize: 10,
                     interval: 0
                 },
-                axisTick: { alignWithLabel: true }
+                axisTick: { 
+                    alignWithLabel: true 
+                }
             },
             yAxis: {
                 type: 'category',
                 data: showYAxisData,
-                splitArea: { show: true },
+                splitArea: { 
+                    show: true,
+                    areaStyle: {
+                        color: backgroundColor // 確保分割區域背景是純白色
+                    }
+                },
                 axisLabel: {
                     fontSize: 10,
                     interval: 0
                 },
-                axisTick: { alignWithLabel: true }
+                axisTick: { 
+                    alignWithLabel: true 
+                }
             },
             dataZoom: [
                 {
@@ -436,8 +460,12 @@ const StockRelationAnalysis = () => {
                 bottom: 10,
                 inRange: {
                     color: colorSchemes[selectedColorScheme]
+                },
+                outOfRange: {
+                    color: backgroundColor
                 }
             },
+            backgroundColor: backgroundColor, // 設置整個圖表的背景色為純白色
             series: [{
                 name: '相關性',
                 type: 'heatmap',
@@ -452,8 +480,8 @@ const StockRelationAnalysis = () => {
                     }
                 },
                 itemStyle: {
-                    borderWidth: 1,
-                    borderColor: 'rgba(255, 255, 255, 0.2)'
+                    borderWidth: 1, // 恢復網格線
+                    borderColor: '#e0e0e0' // 使用淺灰色作為網格線顏色，不影響數據顯示
                 },
                 aspectScale: 1, // 確保使用正方形格子
                 emphasis: {
@@ -556,14 +584,30 @@ const StockRelationAnalysis = () => {
             tooltip: {
                 trigger: 'axis',
                 formatter: function(params) {
+                    // 確保參數有效
+                    if (!params || !Array.isArray(params) || params.length === 0) {
+                        return '無資料';
+                    }
+                    
+                    // 確保第一項有效
+                    if (!params[0] || !params[0].name) {
+                        return '無效的資料點';
+                    }
+                    
                     let result = `日期: ${params[0].name}<br/>`;
+                    
                     params.forEach(param => {
+                        // 確保seriesName有效
+                        const seriesName = param.seriesName || '未知股票';
+                        
                         // 安全地檢查 param.value 是否存在且不是 undefined 或 null
                         const valueDisplay = param.value !== undefined && param.value !== null 
                             ? param.value.toFixed(6) 
                             : '無數據';
-                        result += `${param.seriesName}: ${valueDisplay}<br/>`;
+                            
+                        result += `${seriesName}: ${valueDisplay}<br/>`;
                     });
+                    
                     return result;
                 }
             },
@@ -877,7 +921,11 @@ const StockRelationAnalysis = () => {
                                 className="heatmap-wrapper"
                                 opts={{ renderer: 'canvas' }}
                                 notMerge={true}
-                                style={{ height: '1200px', width: '100%' }}
+                                style={{ 
+                                    height: '1200px', 
+                                    width: '100%',
+                                    backgroundColor: '#ffffff' // 確保組件容器的背景色也是白色
+                                }}
                             />
                         )}
                     </div>
