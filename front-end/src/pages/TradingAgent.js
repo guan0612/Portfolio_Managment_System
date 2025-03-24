@@ -385,7 +385,7 @@ const TradingAgent = () => {
             <YAxis 
               yAxisId="left"
               label={{ 
-                value: '交易量', 
+                value: '交易量/張', 
                 position: 'top',
                 offset: 20,
                 className: 'axis-label'
