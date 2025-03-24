@@ -4,7 +4,6 @@ import Sidenav from './components/Sidenav';
 import IntroductionBento from './pages/IntroductionBento';
 import StockGraph from './pages/StockRelationGraph';
 import TradingStrategy from './pages/TradingStrategy';
-import Settings from './pages/Settings';
 import TradingPerformance from './pages/TradingPerformance';
 import StockRelationAnalysis from './pages/StockRelationAnalysis';
 import './style/App.css';
