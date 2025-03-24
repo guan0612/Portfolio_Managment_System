@@ -235,12 +235,12 @@ const StockRelationAnalysis = () => {
         const preset = visualPresets[presetKey];
         if (preset) {
             setSelectedVisualPreset(presetKey);
-            setNormalizeMethod(preset.normalizeMethod); // 恢復這個設置
+            setNormalizeMethod(preset.normalizeMethod);
             setSelectedColorScheme(preset.colorScheme);
         }
     };
 
-    // 1. 改進的股票相關性熱圖
+    // 股票相關性熱圖配置
     const getHeatmapOption = () => {
         if (correlationData.length === 0 || stockList.length === 0) return {};
         
@@ -249,43 +249,56 @@ const StockRelationAnalysis = () => {
         const xAxisData = stockList;
         const yAxisData = stockList;
         
-        // 獲取統計信息
-        const stats = getCorrelationStats();
-        
-        // 計算色階範圍
-        const { min: minValue, max: maxValue } = getColorRange(stats);
-        
-        // 填充數據，確保正確讀取行列關係
-        for (let i = 0; i < xAxisData.length; i++) {
-            for (let j = 0; j < yAxisData.length; j++) {
-                // 獲取 i 行 j 列的值 - 更安全的數據存取方式
-                const stockI = xAxisData[i]; // 行對應的股票代碼
-                const stockJ = yAxisData[j]; // 列對應的股票代碼
-                
-                // 如果 correlationData[i] 存在且有 stockJ 屬性，使用該值
-                // 否則嘗試從反向關係 correlationData[j][stockI] 獲取（如果可用）
-                let value = 0;
-                if (correlationData[i] && correlationData[i].hasOwnProperty(stockJ)) {
-                    value = correlationData[i][stockJ];
-                } else if (correlationData[j] && correlationData[j].hasOwnProperty(stockI)) {
-                    // 嘗試反向查找，可能在某些API返回中很有用
-                    value = correlationData[j][stockI];
+        // 只取非零值用於計算統計信息
+        let nonZeroValues = [];
+        for (let i = 0; i < correlationData.length; i++) {
+            const stockRow = correlationData[i];
+            for (const key in stockRow) {
+                if (key !== 'Unnamed: 0' && stockRow[key] > 0) {
+                    nonZeroValues.push(stockRow[key]);
                 }
-                
-                // 根據值是否大於閾值決定是否顯示
-                if (value >= thresholdValue) {
-                    data.push([i, j, value]);
-                }
-                // 特殊處理0值，確保它們都有一致的顯示
-                else if (value === 0) {
-                    data.push([i, j, minValue - 0.0001]);
-                }
-                // 其他低於閾值的非零值不顯示
             }
         }
         
-        // 調試信息 - 顯示前10條數據，確認轉換是否正確
-        console.log("熱圖數據示例（前10條）:", data.slice(0, 10));
+        // 計算統計信息
+        const min = Math.min(...nonZeroValues);
+        const max = Math.max(...nonZeroValues);
+        const mean = nonZeroValues.reduce((a, b) => a + b, 0) / nonZeroValues.length;
+        const std = Math.sqrt(nonZeroValues.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / nonZeroValues.length);
+        
+        console.log("熱圖統計數據:", { min, max, mean, std });
+        console.log("相關數據第一行樣例:", correlationData.length > 0 ? correlationData[0] : "無數據");
+        
+        // 填充數據，完全按照CSV原始數據
+        for (let i = 0; i < xAxisData.length; i++) {
+            const stockI = xAxisData[i]; // 行對應的股票代碼
+            
+            for (let j = 0; j < yAxisData.length; j++) {
+                const stockJ = yAxisData[j]; // 列對應的股票代碼
+                
+                // 確保索引有效
+                if (i < correlationData.length && correlationData[i]) {
+                    // 直接從correlationData中獲取原始值
+                    const value = correlationData[i][stockJ];
+                    
+                    // 根據值的特性處理
+                    if (value !== undefined) {
+                        if (value >= thresholdValue) {
+                            // 對於高於閾值的非零值，正常顯示
+                            data.push([i, j, value]);
+                        } else if (value === 0 && i === j) {
+                            // 對角線上的0值，保持0但使用特定顏色
+                            data.push([i, j, 0]);
+                        } else if (value === 0) {
+                            // 其他0值，可以選擇不顯示或顯示為特定顏色
+                            // 這裡選擇不顯示
+                        }
+                    }
+                }
+            }
+        }
+        
+        console.log("熱圖數據樣本（前10條）:", data.slice(0, 10));
         
         // 如果有焦點區域，只顯示該區域的股票
         let showXAxisData = xAxisData;
@@ -336,7 +349,7 @@ const StockRelationAnalysis = () => {
             title: {
                 text: focusedRegion ? `${focusedRegion}產業股票相關性熱圖` : '股票相關性熱圖',
                 left: 'center',
-                subtext: `視覺化方案: ${visualPresets[selectedVisualPreset]?.name || '自定義'} | 均值: ${stats.mean.toFixed(6)}, 標準差: ${stats.std.toFixed(6)} | 色階範圍: ${minValue.toFixed(6)} - ${maxValue.toFixed(6)}`
+                subtext: `均值: ${mean.toFixed(6)}, 標準差: ${std.toFixed(6)} | 色階範圍: ${min.toFixed(6)} - ${max.toFixed(6)}`
             },
             tooltip: {
                 position: 'top',
@@ -345,11 +358,12 @@ const StockRelationAnalysis = () => {
                     const yIndex = params.value[1];
                     const xStock = showXAxisData[xIndex];
                     const yStock = showYAxisData[yIndex];
-                    // 安全地檢查值是否存在且可以格式化
-                    const correlationValue = params.value[2] !== undefined && params.value[2] !== null
-                        ? params.value[2].toFixed(6)
-                        : '未知';
-                    return `${xStock} (${getCompanyName(xStock)}) → ${yStock} (${getCompanyName(yStock)})<br/>相關度: ${correlationValue}`;
+                    // 如果是對角線元素，特殊處理提示文字
+                    if (xStock === yStock) {
+                        return `${xStock} (${getCompanyName(xStock)})<br/>自相關度: ${params.value[2].toFixed(6)}`;
+                    }
+                    // 普通元素正常顯示
+                    return `${xStock} (${getCompanyName(xStock)}) → ${yStock} (${getCompanyName(yStock)})<br/>相關度: ${params.value[2].toFixed(6)}`;
                 }
             },
             toolbox: {
@@ -414,8 +428,8 @@ const StockRelationAnalysis = () => {
                 }
             ],
             visualMap: {
-                min: minValue,
-                max: maxValue,
+                min: min,
+                max: max,
                 calculable: true,
                 orient: 'horizontal',
                 left: 'center',
@@ -452,7 +466,7 @@ const StockRelationAnalysis = () => {
         };
     };
 
-    // 3. 改進的時間序列相關性變化圖
+    // 時間序列相關性變化圖配置
     const getTimeSeriesOption = () => {
         if (!selectedStock || !timeSeriesData[selectedStock] || topCorrelatedStocks.length === 0) {
             return {
@@ -612,7 +626,7 @@ const StockRelationAnalysis = () => {
         };
     };
 
-    // 4. 關聯度排行榜與產業統計
+    // 獲取特定股票的關聯度排行
     const getTopCorrelationsForStock = (stock) => {
         if (!stock || correlationData.length === 0 || stockList.length === 0) return { stocks: [], industries: [] };
         
@@ -804,6 +818,189 @@ const StockRelationAnalysis = () => {
         return Object.values(industries).sort((a, b) => b.count - a.count);
     };
 
+    // 渲染熱圖頁面
+    const renderHeatmapTabPane = () => {
+        return (
+            <TabPane tab="相關性熱圖" key="1">
+                <Card>
+                    <div className="control-group">
+                        <Tooltip title="關聯閾值用於過濾數據，只有高於此閾值的相關性才會被顯示。較高閾值可突顯重要關聯，較低閾值可展示更多資訊。">
+                            <span>關聯閾值：{thresholdValue.toFixed(6)}</span>
+                        </Tooltip>
+                        <Slider
+                            className="slider-control"
+                            min={0.0330}
+                            max={0.0345}
+                            step={0.0001}
+                            value={thresholdValue}
+                            onChange={setThresholdValue}
+                            marks={{
+                                0.0330: 'All',
+                                0.0337: 'Medium',
+                                0.0345: 'High'
+                            }}
+                        />
+                        
+                        <Divider type="vertical" />
+                        
+                        <span>Color Scheme：</span>
+                        <Select
+                            style={{ width: 120 }}
+                            value={selectedColorScheme}
+                            onChange={(value) => {
+                                setSelectedColorScheme(value);
+                                setSelectedVisualPreset('default');
+                            }}
+                        >
+                            <Option value="green">Green</Option>
+                            <Option value="blue">Blue</Option>
+                            <Option value="red">Red</Option>
+                            <Option value="purple">Purple</Option>
+                            <Option value="spectral">Spectral</Option>
+                            <Option value="rainbow">Rainbow</Option>
+                            <Option value="precision">Precision</Option>
+                            <Option value="viridis">Viridis</Option>
+                            <Option value="plasma">Plasma</Option>
+                            <Option value="inferno">Inferno</Option>
+                            <Option value="magma">Magma</Option>
+                        </Select>
+                    </div>
+                    
+                    <div id="heatmap-container" className="heatmap-container">
+                        {loading ? (
+                            <div className="loading-spinner">
+                                <Spin size="large" />
+                            </div>
+                        ) : (
+                            <ReactECharts 
+                                option={getHeatmapOption()} 
+                                className="heatmap-wrapper"
+                                opts={{ renderer: 'canvas' }}
+                                notMerge={true}
+                                style={{ height: '1200px', width: '100%' }}
+                            />
+                        )}
+                    </div>
+                    <div className="guide-section">
+                        <h3>熱圖解讀指南</h3>
+                        <ul>
+                            <li>顏色越深表示兩支股票的相關性越強，從柔和到深色的變化表示相關性強度的增加</li>
+                            <li>對角線上為股票與自身的相關性</li>
+                            <li>您可以使用底部和右側的縮放條來放大查看感興趣的區域</li>
+                            <li>使用上方的產業標籤可以快速聚焦於特定產業內的股票關聯性</li>
+                            <li>GAT精細視圖專為GAT模型數據特性優化，能更好地展示0.033左右的微小差異</li>
+                            <li>通過「關聯閾值」滑桿調整顯示的數據範圍，較高閾值會過濾掉低關聯度的數據點</li>
+                            <li>正方形格子提供更整齊的視覺效果，每個格子的X軸和Y軸長度相等</li>
+                            <li>當資料集中在非常接近的數值範圍（如0.033-0.034）時，色階映射會自動調整以突顯微小差異</li>
+                        </ul>
+                    </div>
+                </Card>
+            </TabPane>
+        );
+    };
+
+    // 渲染時間序列頁面
+    const renderTimeSeriesTabPane = () => {
+        return (
+            <TabPane tab="時間序列變化" key="2">
+                <Card>
+                    <div style={{ marginBottom: '20px' }}>
+                        <Alert
+                            type="info"
+                            message="前5支相關股票選擇邏輯說明"
+                            description={`時間序列圖顯示的是與${selectedStock}關聯度最高的5支股票。這些股票是基於當前選擇的日期(${selectedDate})計算得出，反映當前時點的關聯強度排名。當切換到不同日期時，關聯度排名可能會發生變化，因此顯示的5支股票也會相應變化。這種設計能讓您了解在不同時間點哪些股票與目標股票的關聯最強。`}
+                            showIcon
+                        />
+                    </div>
+                    <div style={{ marginBottom: '20px' }}>
+                        <Space>
+                            <span>顯示模式：</span>
+                            <Switch
+                                checkedChildren="只看非零值變化"
+                                unCheckedChildren="顯示完整數據"
+                                checked={showOnlyNonZero}
+                                onChange={(checked) => setShowOnlyNonZero(checked)}
+                            />
+                            <Tooltip title="「顯示完整數據」模式顯示所有數據包括零值；「只看非零值變化」模式會自動調整Y軸範圍，聚焦在非零數據的變化趨勢上，但會連接所有數據點">
+                                <Button icon="info-circle" type="link">說明</Button>
+                            </Tooltip>
+                        </Space>
+                    </div>
+                    <div className="timeseries-container">
+                        {timeSeriesLoading ? (
+                            <div className="loading-spinner">
+                                <Spin size="large" tip="正在獲取歷史相關性數據..." />
+                            </div>
+                        ) : (
+                            <ReactECharts 
+                                option={getTimeSeriesOption()} 
+                                style={{ height: '100%' }}
+                                opts={{ renderer: 'canvas' }}
+                                notMerge={true}
+                            />
+                        )}
+                    </div>
+                    <div className="guide-section">
+                        <h3>時間序列圖解讀指南</h3>
+                        <ul>
+                            <li>線圖顯示所選股票與其他關聯度最高的5支股票間的關聯強度隨時間變化</li>
+                            <li>「顯示所有數據」模式下，Y軸從0開始，完整展示數據範圍</li>
+                            <li>「只顯示非零值」模式下，聚焦於非零數據的微小變化，更容易觀察趨勢差異</li>
+                            <li>零值會在「只顯示非零值」模式中顯示為線條中斷點</li>
+                            <li>數據來源為過去10個可用日期的GAT模型輸出結果，真實反映市場結構變化</li>
+                            <li>關聯強度急劇變化通常表示市場結構變化，可能與重大事件相關</li>
+                            <li>關聯性下降可能意味著分散投資的良機，而上升可能表示風險聚集</li>
+                            <li>觀察相同產業和不同產業股票的關聯變化趨勢，可發現更深層的市場規律</li>
+                            <li>您可以使用滑鼠拖拽來選擇區域進行放大，查看細微的變化</li>
+                        </ul>
+                    </div>
+                </Card>
+            </TabPane>
+        );
+    };
+
+    // 渲染關聯排行榜頁面
+    const renderRankingTabPane = () => {
+        return (
+            <TabPane tab="關聯排行榜" key="3">
+                <Card>
+                    <h3>與 {selectedStock} ({getCompanyName(selectedStock)}) 關聯度最高的股票</h3>
+                    
+                    <h4 className="correlation-title">股票關聯排行</h4>
+                    <Table 
+                        columns={columns.filter(col => col.key !== 'industryRatio')} 
+                        dataSource={(getTopCorrelationsForStock(selectedStock).stocks || []).map((item, index) => ({...item, key: index}))}
+                        pagination={{ pageSize: 10 }}
+                        loading={loading}
+                    />
+                    
+                    <h4 className="industry-section">產業分布統計</h4>
+                    <Table 
+                        columns={industryColumns} 
+                        dataSource={getTopCorrelationsForStock(selectedStock).industries || []}
+                        pagination={false}
+                        size="small"
+                        style={{ marginBottom: '20px' }}
+                    />
+                    
+                    <div className="guide-section">
+                        <h3>排行榜解讀指南</h3>
+                        <ul>
+                            <li>表格列出與所選股票關聯度最高的其他股票及其產業分布情況</li>
+                            <li>「產業內排名」顯示該股票在其所屬產業中的相關度排名，例如「3/10 (前30%)」表示在此產業相關的10支股票中排第3位</li>
+                            <li>「產業分布統計」表顯示各產業在高關聯股票中的佔比和平均關聯度，有助於分析跨產業關聯模式</li>
+                            <li>數據來自GAT模型生成的關係矩陣，反映真實的股票關聯性</li>
+                            <li>即使看似相近的數值，微小差異仍有重要意義，可通過排序和篩選發現有價值的關聯模式</li>
+                            <li>可使用產業標籤篩選特定產業的相關股票，發現跨產業和產業內的關聯特點</li>
+                        </ul>
+                    </div>
+                </Card>
+            </TabPane>
+        );
+    };
+
+    // ==================== 主組件渲染 ====================
+    
     // 渲染組件
     return (
         <div className="stock-correlation-container">
@@ -878,171 +1075,9 @@ const StockRelationAnalysis = () => {
             </Card>
             
             <Tabs defaultActiveKey="1">
-                <TabPane tab="相關性熱圖" key="1">
-                    <Card>
-                        <div className="control-group">
-                            <Tooltip title="關聯閾值用於過濾數據，只有高於此閾值的相關性才會被顯示。較高閾值可突顯重要關聯，較低閾值可展示更多資訊。">
-                                <span>關聯閾值：{thresholdValue.toFixed(6)}</span>
-                            </Tooltip>
-                            <Slider
-                                className="slider-control"
-                                min={0.0330}
-                                max={0.0345}
-                                step={0.0001}
-                                value={thresholdValue}
-                                onChange={setThresholdValue}
-                                marks={{
-                                    0.0330: 'All',
-                                    0.0337: 'Medium',
-                                    0.0345: 'High'
-                                }}
-                            />
-                            
-                            <Divider type="vertical" />
-                            
-                            <span>Color Scheme：</span>
-                            <Select
-                                style={{ width: 120 }}
-                                value={selectedColorScheme}
-                                onChange={(value) => {
-                                    setSelectedColorScheme(value);
-                                    setSelectedVisualPreset('default');
-                                }}
-                            >
-                                <Option value="green">Green</Option>
-                                <Option value="blue">Blue</Option>
-                                <Option value="red">Red</Option>
-                                <Option value="purple">Purple</Option>
-                                <Option value="spectral">Spectral</Option>
-                                <Option value="rainbow">Rainbow</Option>
-                                <Option value="precision">Precision</Option>
-                                <Option value="viridis">Viridis</Option>
-                                <Option value="plasma">Plasma</Option>
-                                <Option value="inferno">Inferno</Option>
-                                <Option value="magma">Magma</Option>
-                            </Select>
-                        </div>
-                        
-                        <div id="heatmap-container" className="heatmap-container">
-                            {loading ? (
-                                <div className="loading-spinner">
-                                    <Spin size="large" />
-                                </div>
-                            ) : (
-                                <ReactECharts 
-                                    option={getHeatmapOption()} 
-                                    className="heatmap-wrapper"
-                                    opts={{ renderer: 'canvas' }}
-                                    notMerge={true}
-                                    style={{ height: '1200px', width: '100%' }}
-                                />
-                            )}
-                        </div>
-                        <div className="guide-section">
-                            <h3>熱圖解讀指南</h3>
-                            <ul>
-                                <li>顏色越深表示兩支股票的相關性越強，從柔和到深色的變化表示相關性強度的增加</li>
-                                <li>對角線上為股票與自身的相關性（必然為1）</li>
-                                <li>您可以使用底部和右側的縮放條來放大查看感興趣的區域</li>
-                                <li>使用上方的產業標籤可以快速聚焦於特定產業內的股票關聯性</li>
-                                <li>GAT精細視圖專為GAT模型數據特性優化，能更好地展示0.033左右的微小差異</li>
-                                <li>通過「關聯閾值」滑桿調整顯示的數據範圍，較高閾值會過濾掉低關聯度的數據點</li>
-                                <li>正方形格子提供更整齊的視覺效果，每個格子的X軸和Y軸長度相等</li>
-                                <li>當資料集中在非常接近的數值範圍（如0.033-0.034）時，色階映射會自動調整以突顯微小差異</li>
-                            </ul>
-                        </div>
-                    </Card>
-                </TabPane>
-                
-                <TabPane tab="時間序列變化" key="2">
-                    <Card>
-                        <div style={{ marginBottom: '20px' }}>
-                            <Alert
-                                type="info"
-                                message="前5支相關股票選擇邏輯說明"
-                                description={`時間序列圖顯示的是與${selectedStock}關聯度最高的5支股票。這些股票是基於當前選擇的日期(${selectedDate})計算得出，反映當前時點的關聯強度排名。當切換到不同日期時，關聯度排名可能會發生變化，因此顯示的5支股票也會相應變化。這種設計能讓您了解在不同時間點哪些股票與目標股票的關聯最強。`}
-                                showIcon
-                            />
-                        </div>
-                        <div style={{ marginBottom: '20px' }}>
-                            <Space>
-                                <span>顯示模式：</span>
-                                <Switch
-                                    checkedChildren="只看非零值變化"
-                                    unCheckedChildren="顯示完整數據"
-                                    checked={showOnlyNonZero}
-                                    onChange={(checked) => setShowOnlyNonZero(checked)}
-                                />
-                                <Tooltip title="「顯示完整數據」模式顯示所有數據包括零值；「只看非零值變化」模式會自動調整Y軸範圍，聚焦在非零數據的變化趨勢上，但會連接所有數據點">
-                                    <Button icon="info-circle" type="link">說明</Button>
-                                </Tooltip>
-                            </Space>
-                        </div>
-                        <div className="timeseries-container">
-                            {timeSeriesLoading ? (
-                                <div className="loading-spinner">
-                                    <Spin size="large" tip="正在獲取歷史相關性數據..." />
-                                </div>
-                            ) : (
-                                <ReactECharts 
-                                    option={getTimeSeriesOption()} 
-                                    style={{ height: '100%' }}
-                                    opts={{ renderer: 'canvas' }}
-                                    notMerge={true}
-                                />
-                            )}
-                        </div>
-                        <div className="guide-section">
-                            <h3>時間序列圖解讀指南</h3>
-                            <ul>
-                                <li>線圖顯示所選股票與其他關聯度最高的5支股票間的關聯強度隨時間變化</li>
-                                <li>「顯示所有數據」模式下，Y軸從0開始，完整展示數據範圍</li>
-                                <li>「只顯示非零值」模式下，聚焦於非零數據的微小變化，更容易觀察趨勢差異</li>
-                                <li>零值會在「只顯示非零值」模式中顯示為線條中斷點</li>
-                                <li>數據來源為過去10個可用日期的GAT模型輸出結果，真實反映市場結構變化</li>
-                                <li>關聯強度急劇變化通常表示市場結構變化，可能與重大事件相關</li>
-                                <li>關聯性下降可能意味著分散投資的良機，而上升可能表示風險聚集</li>
-                                <li>觀察相同產業和不同產業股票的關聯變化趨勢，可發現更深層的市場規律</li>
-                                <li>您可以使用滑鼠拖拽來選擇區域進行放大，查看細微的變化</li>
-                            </ul>
-                        </div>
-                    </Card>
-                </TabPane>
-                
-                <TabPane tab="關聯排行榜" key="3">
-                    <Card>
-                        <h3>與 {selectedStock} ({getCompanyName(selectedStock)}) 關聯度最高的股票</h3>
-                        
-                        <h4 className="correlation-title">股票關聯排行</h4>
-                        <Table 
-                            columns={columns.filter(col => col.key !== 'industryRatio')} 
-                            dataSource={(getTopCorrelationsForStock(selectedStock).stocks || []).map((item, index) => ({...item, key: index}))}
-                            pagination={{ pageSize: 10 }}
-                            loading={loading}
-                        />
-                        
-                        <h4 className="industry-section">產業分布統計</h4>
-                        <Table 
-                            columns={industryColumns} 
-                            dataSource={getTopCorrelationsForStock(selectedStock).industries || []}
-                            pagination={false}
-                            size="small"
-                            style={{ marginBottom: '20px' }}
-                        />
-                        
-                        <div className="guide-section">
-                            <h3>排行榜解讀指南</h3>
-                            <ul>
-                                <li>表格列出與所選股票關聯度最高的其他股票及其產業分布情況</li>
-                                <li>「產業內排名」顯示該股票在其所屬產業中的相關度排名，例如「3/10 (前30%)」表示在此產業相關的10支股票中排第3位</li>
-                                <li>「產業分布統計」表顯示各產業在高關聯股票中的佔比和平均關聯度，有助於分析跨產業關聯模式</li>
-                                <li>數據來自GAT模型生成的關係矩陣，反映真實的股票關聯性</li>
-                                <li>即使看似相近的數值，微小差異仍有重要意義，可通過排序和篩選發現有價值的關聯模式</li>
-                                <li>可使用產業標籤篩選特定產業的相關股票，發現跨產業和產業內的關聯特點</li>
-                            </ul>
-                        </div>
-                    </Card>
-                </TabPane>
+                {renderHeatmapTabPane()}
+                {renderTimeSeriesTabPane()}
+                {renderRankingTabPane()}
             </Tabs>
         </div>
     );
