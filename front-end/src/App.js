@@ -4,7 +4,6 @@ import Sidenav from './components/Sidenav';
 import IntroductionBento from './pages/IntroductionBento';
 import StockGraph from './pages/StockRelationGraph';
 import TradingStrategy from './pages/TradingStrategy';
-import Settings from './pages/Settings';
 import StockRelationAnalysis from './pages/StockRelationAnalysis';
 import TradingAgent from './pages/TradingAgent';
 import './style/App.css';
@@ -20,7 +19,7 @@ function App() {
           <Route path="/stock-relation-graph" element={<StockGraph />} />
           <Route path="/stock-relation-analysis" element={<StockRelationAnalysis />} />
           <Route path="/trading-strategy" element={<TradingStrategy />} />
-          <Route path="/settings" element={<Settings />} />
+          {/* <Route path="/settings" element={<Settings />} /> */}
           {/* 舊路由，保留向後兼容性 */}
           <Route path="/stock-graph" element={<StockGraph />} />
           <Route path="/stock-relation" element={<StockRelationAnalysis />} />
