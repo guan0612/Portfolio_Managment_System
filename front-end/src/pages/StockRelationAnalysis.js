@@ -42,7 +42,7 @@ const StockRelationAnalysis = () => {
     const [selectedStock, setSelectedStock] = useState('2330'); // 預設選擇台積電
     const [loading, setLoading] = useState(true);
     const [stockList, setStockList] = useState([]);
-    const [thresholdValue, setThresholdValue] = useState(0.0335); // 修改為更接近數據真實分佈的值
+    const [thresholdValue, setThresholdValue] = useState(0.0325); // 調低預設閾值以顯示更多低值關聯
     const [selectedVisualPreset, setSelectedVisualPreset] = useState('default'); // 預設使用標準視圖
     const [timeSeriesData, setTimeSeriesData] = useState({});
     const [timeSeriesLoading, setTimeSeriesLoading] = useState(false);
@@ -1241,112 +1241,107 @@ const StockRelationAnalysis = () => {
     // 渲染熱圖頁面
     const renderHeatmapTabPane = () => {
         return (
-                <TabPane tab="相關性熱圖" key="1">
-                    <Card>
-                        <div className="control-group">
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', marginBottom: '15px' }}>
-                            <div>
-                            <Tooltip title="關聯閾值用於過濾數據，只有高於此閾值的相關性才會被顯示。較高閾值可突顯重要關聯，較低閾值可展示更多資訊。">
-                                <span>關聯閾值：{thresholdValue.toFixed(6)}</span>
-                            </Tooltip>
-                            <Slider
-                                className="slider-control"
-                                min={0.0330}
-                                max={0.0345}
-                                step={0.0001}
-                                value={thresholdValue}
-                                onChange={setThresholdValue}
-                                marks={{
-                                        0.0330: 'All',
-                                        0.0337: 'Medium',
-                                        0.0345: 'High'
-                                    }}
-                                    style={{ width: '300px' }}
-                                />
-                            </div>
-                            
-                            <div>
-                                <span>Color Scheme：</span>
-                                <Select
-                                    style={{ width: 120 }}
-                                    value={selectedColorScheme}
-                                    onChange={(value) => {
-                                        setSelectedColorScheme(value);
-                                        setSelectedVisualPreset('default');
-                                    }}
-                                >
-                                    <Option value="green">Green</Option>
-                                    <Option value="blue">Blue</Option>
-                                    <Option value="red">Red</Option>
-                                    <Option value="purple">Purple</Option>
-                                    <Option value="spectral">Spectral</Option>
-                                    <Option value="rainbow">Rainbow</Option>
-                                    <Option value="precision">Precision</Option>
-                                    <Option value="viridis">Viridis</Option>
-                                    <Option value="plasma">Plasma</Option>
-                                    <Option value="inferno">Inferno</Option>
-                                    <Option value="magma">Magma</Option>
-                                </Select>
-                            </div>
-                            
-                            <div className="date-navigation">
-                            <Button 
-                                    icon="left" 
-                                    onClick={goToPreviousDate} 
-                                    disabled={!selectedDate || availableDates.length <= 1}
-                                >
-                                    上一日
-                                </Button>
-                                <span style={{ margin: '0 8px' }}>{selectedDate || '無日期'}</span>
-                                <Button 
-                                    icon="right" 
-                                    onClick={goToNextDate} 
-                                    disabled={!selectedDate || availableDates.length <= 1}
-                                >
-                                    下一日
-                            </Button>
-                            </div>
-                        </div>
+            <TabPane tab="相關性熱圖" key="1">
+                <Card>
+                    <div className="control-group">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', marginBottom: '15px' }}>
+                        <div>
+                        <Tooltip title="關聯閾值用於過濾數據，只有高於此閾值的相關性才會被顯示。較高閾值可突顯重要關聯，較低閾值可展示更多資訊。使用滑桿調整閾值，可直接觀察不同強度的關聯關係。">
+                            <span>關聯閾值：{thresholdValue.toFixed(6)}</span>
+                        </Tooltip>
+                        <Slider
+                            className="slider-control"
+                            min={0.0300}
+                            max={0.0345}
+                            step={0.0001}
+                            value={thresholdValue}
+                            onChange={setThresholdValue}
+                            style={{ width: '300px' }}
+                            />
                         </div>
                         
-                    <div id="heatmap-container" className="heatmap-container">
-                            {loading ? (
-                                <div className="loading-spinner">
-                                    <Spin size="large" />
-                                </div>
-                            ) : (
-                                <ReactECharts 
-                                    option={getHeatmapOption()} 
-                                    className="heatmap-wrapper"
-                                    opts={{ renderer: 'canvas' }}
-                                    notMerge={true}
-                                style={{ 
-                                    height: '1200px', 
-                                    width: '100%',
-                                    backgroundColor: '#ffffff' // 確保組件容器的背景色也是白色
+                        <div>
+                            <span>Color Scheme：</span>
+                            <Select
+                                style={{ width: 120 }}
+                                value={selectedColorScheme}
+                                onChange={(value) => {
+                                    setSelectedColorScheme(value);
+                                    setSelectedVisualPreset('default');
                                 }}
-                                />
-                            )}
+                            >
+                                <Option value="green">Green</Option>
+                                <Option value="blue">Blue</Option>
+                                <Option value="red">Red</Option>
+                                <Option value="purple">Purple</Option>
+                                <Option value="spectral">Spectral</Option>
+                                <Option value="rainbow">Rainbow</Option>
+                                <Option value="precision">Precision</Option>
+                                <Option value="viridis">Viridis</Option>
+                                <Option value="plasma">Plasma</Option>
+                                <Option value="inferno">Inferno</Option>
+                                <Option value="magma">Magma</Option>
+                            </Select>
                         </div>
-                        <div className="guide-section">
-                            <h3>熱圖解讀指南</h3>
-                            <ul>
-                                <li>顏色越深表示兩支股票的相關性越強，從柔和到深色的變化表示相關性強度的增加</li>
-                            <li>對角線上為股票與自身的相關性</li>
-                                <li>您可以使用底部和右側的縮放條來放大查看感興趣的區域</li>
-                                <li>使用上方的產業標籤可以快速聚焦於特定產業內的股票關聯性</li>
-                                <li>GAT精細視圖專為GAT模型數據特性優化，能更好地展示0.033左右的微小差異</li>
-                                <li>通過「關聯閾值」滑桿調整顯示的數據範圍，較高閾值會過濾掉低關聯度的數據點</li>
-                                <li>正方形格子提供更整齊的視覺效果，每個格子的X軸和Y軸長度相等</li>
-                                <li>當資料集中在非常接近的數值範圍（如0.033-0.034）時，色階映射會自動調整以突顯微小差異</li>
-                            <li>使用頁面中的「上一日」和「下一日」按鈕可輕鬆切換不同日期的熱圖，比較市場結構變化</li>
-                            </ul>
+                        
+                        <div className="date-navigation">
+                        <Button 
+                                icon="left" 
+                                onClick={goToPreviousDate} 
+                                disabled={!selectedDate || availableDates.length <= 1}
+                            >
+                                上一日
+                            </Button>
+                            <span style={{ margin: '0 8px' }}>{selectedDate || '無日期'}</span>
+                            <Button 
+                                icon="right" 
+                                onClick={goToNextDate} 
+                                disabled={!selectedDate || availableDates.length <= 1}
+                            >
+                                下一日
+                        </Button>
                         </div>
-                    </Card>
-                </TabPane>
+                    </div>
+                    </div>
+                    
+                <div id="heatmap-container" className="heatmap-container">
+                        {loading ? (
+                            <div className="loading-spinner">
+                                <Spin size="large" />
+                            </div>
+                        ) : (
+                            <ReactECharts 
+                                option={getHeatmapOption()} 
+                                className="heatmap-wrapper"
+                                opts={{ renderer: 'canvas' }}
+                                notMerge={true}
+                            style={{ 
+                                height: '1200px', 
+                                width: '100%',
+                                backgroundColor: '#ffffff' // 確保組件容器的背景色也是白色
+                            }}
+                            />
+                        )}
+                    </div>
+                    <div className="guide-section">
+                        <h3>熱圖解讀指南</h3>
+                        <ul>
+                            <li>顏色越深表示兩支股票的相關性越強，從柔和到深色的變化表示相關性強度的增加</li>
+                        <li>對角線上為股票與自身的相關性</li>
+                            <li>您可以使用底部和右側的縮放條來放大查看感興趣的區域</li>
+                            <li>使用上方的產業標籤可以快速聚焦於特定產業內的股票關聯性</li>
+                            <li>GAT精細視圖專為GAT模型數據特性優化，能更好地展示0.033左右的微小差異</li>
+                            <li>通過「關聯閾值」滑桿調整顯示的數據範圍，較高閾值會過濾掉低關聯度的數據點</li>
+                            <li>正方形格子提供更整齊的視覺效果，每個格子的X軸和Y軸長度相等</li>
+                            <li>當資料集中在非常接近的數值範圍（如0.033-0.034）時，色階映射會自動調整以突顯微小差異</li>
+                        <li>使用頁面中的「上一日」和「下一日」按鈕可輕鬆切換不同日期的熱圖，比較市場結構變化</li>
+                        </ul>
+                    </div>
+                </Card>
+            </TabPane>
         );
     };
-                
+                    
     // 渲染時間序列頁面
     const renderTimeSeriesTabPane = () => {
         return (
@@ -1451,7 +1446,7 @@ const StockRelationAnalysis = () => {
                 </TabPane>
         );
     };
-                
+                    
     // 渲染關聯排行榜頁面
     const renderRankingTabPane = () => {
         return (
