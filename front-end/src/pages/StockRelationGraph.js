@@ -17,8 +17,8 @@ const StockRelationGraph = () => {
     const [highlightedNodes, setHighlightedNodes] = useState([]);
     const [highlightedEdges, setHighlightedEdges] = useState([]);
     const [availableDates, setAvailableDates] = useState([]);
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [errorMessage, setErrorMessage] = useState('');  // 新增錯誤訊息狀態
+    const [selectedDate, setSelectedDate] = useState('2024-05-16');
+    const [errorMessage, setErrorMessage] = useState('');
     const [barChartData, setBarChartData] = useState([]);
     const allIndustries = getAllIndustries();
 
@@ -56,27 +56,34 @@ const StockRelationGraph = () => {
             .catch(error => console.error('Error fetching dates:', error));
     }, []);
 
-    // 監聽選擇的股票變化和閥值變化
+    // 監聽圖數據變化
     useEffect(() => {
-        if (selectedStock) {
+        if (!loading && graphData.nodes.length > 0) {
+            console.log('Graph data updated, running search...');
             handleSearch();
         }
-    }, [selectedStock, threshold]);  // 添加 threshold 作為依賴
+    }, [graphData, loading]);
+
+    // 監聽股票和閥值變化
+    useEffect(() => {
+        if (!loading && graphData.nodes.length > 0) {
+            console.log('Stock or threshold changed, running search...');
+            handleSearch();
+        }
+    }, [selectedStock, threshold]);
 
     // 取得圖數據
     useEffect(() => {
         if (!selectedDate) return;
-        
-        setLoading(true);
-        fetch(`http://localhost:5000/gat/${selectedDate}`)
-            .then(response => {
+
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const response = await fetch(`http://localhost:5000/gat/${selectedDate}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Received data:', data);
+                const data = await response.json();
                 
                 if (data.error) {
                     console.error('Server error:', data.error);
@@ -117,14 +124,8 @@ const StockRelationGraph = () => {
                         });
                     });
 
-                    console.log('Number of nodes:', nodes.size);
-                    console.log('Number of links:', links.length);
-                    console.log('Sample nodes:', Array.from(nodes).slice(0, 5));
-                    console.log('Sample links:', links.slice(0, 5));
-                    console.log('all links:', links);
-
                     if (nodes.size > 0) {
-                        setGraphData({
+                        const newGraphData = {
                             nodes: Array.from(nodes).map(code => ({
                                 name: code,
                                 value: links.filter(link => 
@@ -133,21 +134,26 @@ const StockRelationGraph = () => {
                                 category: getStockIndustry(code)
                             })),
                             links: links
-                        });
-                        // 只在有選擇股票時執行搜尋
-                        if (selectedStock) {
-                            console.log('default selected stock:', selectedStock);
-                            handleSearch();
+                        };
+
+                        // 檢查預設股票是否存在
+                        if (!nodes.has(selectedStock)) {
+                            console.log('Selected stock not found, switching to first available stock');
+                            setSelectedStock(Array.from(nodes)[0]);
                         }
+
+                        setGraphData(newGraphData);
                     }
                 }
                 setLoading(false);
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error fetching graph data:', error);
                 setLoading(false);
-            });
-    }, [selectedDate]);  // 不要在這裡加入 selectedStock 作為依賴，否則會造成循環
+            }
+        };
+
+        fetchData();
+    }, [selectedDate]);
 
     const handleSearch = () => {
         // 清除之前的高亮狀態
@@ -342,24 +348,34 @@ const StockRelationGraph = () => {
                 }
             },
             grid: {
-                left: '3%',
-                right: '4%',
-                bottom: '3%',
+                left: '5%',
+                right: '5%',
+                bottom: '20%',  // 增加底部空间
+                top: '15%',     // 增加顶部空间
                 containLabel: true
             },
             xAxis: {
                 type: 'category',
-                data: barChartData.map(item => item.stock),
+                data: barChartData.map(item => `${item.stock}\n${item.name}`),
                 axisLabel: {
                     interval: 0,
-                    rotate: 45
+                    rotate: 45,
+                    fontSize: 12,
+                    formatter: function (value) {
+                        const [code, name] = value.split('\n');
+                        const shortName = name.length > 8 ? name.substring(0, 8) + '...' : name;
+                        return `${code}\n${shortName}`;
+                    }
+                },
+                axisTick: {
+                    alignWithLabel: true
                 }
             },
             yAxis: {
                 type: 'value',
                 name: '關聯度',
-                min: threshold,  // 设置最小值为阈值
-                max: maxValue * 1.1,  // 设置最大值为数据最大值的1.1倍
+                min: threshold,
+                max: maxValue * 1.1,
                 axisLabel: {
                     formatter: '{value}'
                 },
@@ -373,6 +389,8 @@ const StockRelationGraph = () => {
             series: [{
                 name: '關聯度',
                 type: 'bar',
+                barWidth: '50%',  // 调整柱子宽度
+                barGap: '30%',    // 调整柱子间距
                 data: barChartData.map(item => ({
                     value: item.value,
                     stock: item.stock,
