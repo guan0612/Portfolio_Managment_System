@@ -19,9 +19,6 @@ function App() {
           <Route path="/stock-relation-graph" element={<StockGraph />} />
           <Route path="/stock-relation-analysis" element={<StockRelationAnalysis />} />
           <Route path="/trading-strategy" element={<TradingStrategy />} />
-          <Route path="/stock-graph" element={<StockGraph />} />
-          <Route path="/stock-relation" element={<StockRelationAnalysis />} />
-          <Route path="/trading-performance" element={<TradingAgent />} />
         </Routes>
       </main>
     </div>
