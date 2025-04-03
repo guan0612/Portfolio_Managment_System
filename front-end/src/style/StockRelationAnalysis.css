@@ -110,4 +110,22 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* 數據分佈相關樣式 */
+.distribution-container {
+    height: 600px;
+    position: relative;
+    margin-bottom: 20px;
+    border: 1px solid #f0f0f0;
+    border-radius: 4px;
+    padding: 12px;
+    overflow: hidden;
+}
+
+.distribution-container .loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
 } 
