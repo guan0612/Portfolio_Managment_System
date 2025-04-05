@@ -39,7 +39,7 @@ const StockRelationAnalysis = () => {
     const [correlationData, setCorrelationData] = useState([]);
     const [availableDates, setAvailableDates] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
-    const [selectedStock, setSelectedStock] = useState('2330'); // 預設選擇台積電
+    const [selectedStock, setSelectedStock] = useState('1101'); // 預設選擇台積電
     const [loading, setLoading] = useState(true);
     const [stockList, setStockList] = useState([]);
     const [thresholdValue, setThresholdValue] = useState(0.0325); // 調低預設閾值以顯示更多低值關聯

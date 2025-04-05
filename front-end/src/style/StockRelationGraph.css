@@ -32,7 +32,7 @@
   width: 100%;
   flex: 1;
   min-height: 0; /* 重要：防止flex子元素溢出 */
-  height: 600px;
+  height: 800px;
   width: 100%;
   position: relative;
 }
@@ -41,7 +41,7 @@
 .echarts-for-react {
   width: 100% !important;
   height: 100% !important;
-  min-height: 600px;
+  min-height: 800px;
 }
 
 .control-space {
@@ -59,7 +59,7 @@
 /* 柱状图样式 */
 .bar-chart-container {
   margin-top: 20px;
-  height: 400px;
+  height: 500px;
   width: 100%;
 }
 
