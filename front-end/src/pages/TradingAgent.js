@@ -1,4 +1,5 @@
 import React from 'react';
+import TradingPerformance from './TradingPerformance';
 
 const TradingAgent = () => {
   return (
@@ -7,14 +8,9 @@ const TradingAgent = () => {
       borderRadius: '8px',
       padding: '20px',
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      marginBottom: '20px',
-      minHeight: '600px'
+      marginBottom: '20px'
     }}>
-      <div style={{ textAlign: 'center' }}>
-        <h2 style={{ marginBottom: '10px', color: '#333' }}>Trading Agent</h2>
-        {/* Add your Trading Agent content here */}
-        <p>This feature is coming soon!</p>
-      </div>
+      <TradingPerformance />
     </div>
   );
 };

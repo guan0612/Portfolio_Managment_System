@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import Papa from 'papaparse';
 import TradingAgent from './TradingAgent';
+import '../style/TradingStrategy.css';
 
 const TradingStrategy = () => {
   const [stockData, setStockData] = useState([]);
@@ -12,7 +13,15 @@ const TradingStrategy = () => {
   const [selectedLegend, setSelectedLegend] = useState({});
   const [zoomRange, setZoomRange] = useState({ start: 0, end: 100 });
   const [activeTab, setActiveTab] = useState('agent'); // 'agent' or 'strategy'
+  const [tableData, setTableData] = useState([]);
   const chartRef = useRef(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [startY, setStartY] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [scrollTop, setScrollTop] = useState(0);
+  const tableWrapperRef = useRef(null);
 
   const handleChartClick = (params) => {
     // Get the date whether clicking on a point or the axis
@@ -58,6 +67,48 @@ const TradingStrategy = () => {
       start: currentZoom.start,
       end: currentZoom.end
     });
+  };
+
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.1, 2));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
+  };
+
+  const handleResetZoom = () => {
+    setZoomLevel(1);
+  };
+
+  const handleMouseDown = (e) => {
+    if (zoomLevel <= 1) return; // Only enable dragging when zoomed in
+    setIsDragging(true);
+    const wrapper = tableWrapperRef.current;
+    setStartX(e.pageX - wrapper.offsetLeft);
+    setStartY(e.pageY - wrapper.offsetTop);
+    setScrollLeft(wrapper.scrollLeft);
+    setScrollTop(wrapper.scrollTop);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || zoomLevel <= 1) return;
+    e.preventDefault();
+    const wrapper = tableWrapperRef.current;
+    const x = e.pageX - wrapper.offsetLeft;
+    const y = e.pageY - wrapper.offsetTop;
+    const walkX = (x - startX);
+    const walkY = (y - startY);
+    wrapper.scrollLeft = scrollLeft - walkX;
+    wrapper.scrollTop = scrollTop - walkY;
   };
 
   useEffect(() => {
@@ -120,6 +171,7 @@ const TradingStrategy = () => {
             setStockData(processedData);
             setDates(dateList);
             setStocks(stockSymbols);
+            setTableData(data);
           }
         });
       })
@@ -153,7 +205,7 @@ const TradingStrategy = () => {
         },
         formatter: function (params) {
           const date = params[0].data[0];
-          let result = `<div style="font-weight: bold; margin-bottom: 8px">Date: ${date}</div>`;
+          let result = `<div class="trading-strategy-tooltip-title">Date: ${date}</div>`;
           let selectedStocks = [];
           let notSelectedStocks = [];
           
@@ -167,10 +219,10 @@ const TradingStrategy = () => {
           });
           
           if (selectedStocks.length > 0) {
-            result += `<div style="color: #52c41a; padding: 3px 0;"><b>SELECTED (${selectedStocks.length}):</b> ${selectedStocks.join(', ')}</div>`;
+            result += `<div class="trading-strategy-tooltip-selected"><b>SELECTED (${selectedStocks.length}):</b> ${selectedStocks.join(', ')}</div>`;
           }
           if (notSelectedStocks.length > 0) {
-            result += `<div style="color: #ff4d4f; padding: 3px 0;"><b>NOT SELECTED (${notSelectedStocks.length}):</b> ${notSelectedStocks.join(', ')}</div>`;
+            result += `<div class="trading-strategy-tooltip-not-selected"><b>NOT SELECTED (${notSelectedStocks.length}):</b> ${notSelectedStocks.join(', ')}</div>`;
           }
           
           return result;
@@ -283,7 +335,7 @@ const TradingStrategy = () => {
   };
 
   return (
-    <div style={{ padding: '20px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+    <div className="trading-strategy-container">
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -346,6 +398,7 @@ const TradingStrategy = () => {
             <ReactECharts
               ref={chartRef}
               option={getOption()}
+              className="trading-strategy-chart"
               style={{ height: '100%', width: '100%' }}
               opts={{ renderer: 'svg' }}
               onEvents={{
@@ -395,6 +448,7 @@ const TradingStrategy = () => {
               }}
             />
           </div>
+          
           {selectedDate && (
             <div style={{ 
               marginTop: '20px',
@@ -445,10 +499,7 @@ const TradingStrategy = () => {
                           textAlign: 'center',
                           border: '1px solid rgba(82, 196, 26, 0.2)',
                           cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          ':hover': {
-                            backgroundColor: 'rgba(82, 196, 26, 0.2)'
-                          }
+                          transition: 'all 0.2s'
                         }}
                       >
                         {stock}
@@ -498,10 +549,7 @@ const TradingStrategy = () => {
                           textAlign: 'center',
                           border: '1px solid rgba(255, 77, 79, 0.2)',
                           cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          ':hover': {
-                            backgroundColor: 'rgba(255, 77, 79, 0.2)'
-                          }
+                          transition: 'all 0.2s'
                         }}
                       >
                         {stock}
@@ -512,6 +560,68 @@ const TradingStrategy = () => {
               </div>
             </div>
           )}
+          
+          {/* Stock Selection Table */}
+          <div className="stock-selection-table-container">
+            <div 
+              ref={tableWrapperRef}
+              className="table-wrapper"
+              onMouseDown={handleMouseDown}
+              onMouseLeave={handleMouseLeave}
+              onMouseUp={handleMouseUp}
+              onMouseMove={handleMouseMove}
+            >
+              <table 
+                className="stock-selection-table"
+                style={{ 
+                  transform: `scale(${zoomLevel})`, 
+                  transformOrigin: 'top left',
+                  marginBottom: '50px'
+                }}
+              >
+                <thead>
+                  <tr>
+                    <th>Stock ID</th>
+                    {dates.map((date, index) => (
+                      <th key={index}>{date}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {stocks.map((stock, stockIndex) => (
+                    <tr key={stockIndex}>
+                      <td>{stock}</td>
+                      {dates.map((date, dateIndex) => {
+                        const value = tableData[dateIndex]?.[stock];
+                        return (
+                          <td 
+                            key={dateIndex}
+                            className={value === '1' ? 'selected' : 'not-selected'}
+                          />
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="zoom-controls">
+                <button className="zoom-button" onClick={handleZoomOut}>−</button>
+                <div className="zoom-level">{Math.round(zoomLevel * 100)}%</div>
+                <button className="zoom-button" onClick={handleZoomIn}>+</button>
+                <button className="zoom-button" onClick={handleResetZoom}>↺</button>
+              </div>
+            </div>
+            <div className="table-legend">
+              <div className="legend-item">
+                <div className="legend-color selected"></div>
+                <span>Selected</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-color not-selected"></div>
+                <span>Not Selected</span>
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <TradingAgent />
