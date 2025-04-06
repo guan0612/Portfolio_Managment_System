@@ -32,6 +32,111 @@ const IntroductionBento = () => {
           </div>
         </div>
         
+        <div className="bento-item module-gat">
+          <div className="module-content-wrapper">
+            <div className="module-header">
+              <div className="module-icon">📊</div>
+              <h2>Stock Relationships</h2>
+            </div>
+            <div className="module-links">
+              <a href="/stock-relation-graph" className="module-link-button small">關係圖</a>
+              <a href="/stock-relation-analysis" className="module-link-button small">分析</a>
+            </div>
+            <p className="module-description">Discovers hidden connections between stocks by analyzing financial reports, revealing which companies influence each other in the market.</p>
+            <div className="io-panel">
+              <div className="io-item">
+                <span className="io-label">Analyzes</span>
+                <span className="io-value">Quarterly financial data from 74 companies</span>
+              </div>
+              <div className="io-item">
+                <span className="io-label">Provides</span>
+                <span className="io-value">A map of stock correlations and influences</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bento-item module-stock-picked">
+          <div className="module-content-wrapper">
+            <div className="module-header">
+              <div className="module-icon">🎯</div>
+              <h2>Portfolio Builder</h2>
+            </div>
+            <div className="module-links">
+              <a href="/trading-strategy" className="module-link-button small">查看策略</a>
+            </div>
+            <p className="module-description">Creates a low-risk investment portfolio by identifying which stocks work well together, balancing potential returns against market volatility.</p>
+            <div className="io-panel">
+              <div className="io-item">
+                <span className="io-label">Considers</span>
+                <span className="io-value">Stock relationships and financial health</span>
+              </div>
+              <div className="io-item">
+                <span className="io-label">Selects</span>
+                <span className="io-value">The ideal mix of stocks for lower risk</span>
+              </div>
+              <div className="io-item">
+                <span className="io-label">Strategy</span>
+                <span className="io-value">Risk-minimization through diversification</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bento-item module-selected-portfolio">
+          <div className="module-content-wrapper">
+            <div className="module-header">
+              <div className="module-icon">🔄</div>
+              <h2>Selected Portfolio</h2>
+            </div>
+            <div className="module-links">
+              <a href="/trading-agent" className="module-link-button small">查看策略</a>
+            </div>
+            <p className="module-description">A risk-minimized investment portfolio created by the Stock Selection Agent, focused on balancing potential returns with market volatility.</p>
+            <div className="io-panel">
+              <div className="io-item">
+                <span className="io-label">Formation</span>
+                <span className="io-value">Based on GAT network insights and financial metrics</span>
+              </div>
+              <div className="io-item">
+                <span className="io-label">Objective</span>
+                <span className="io-value">Maximize Sharpe ratio for optimal risk-return balance</span>
+              </div>
+              <div className="io-item">
+                <span className="io-label">Duration</span>
+                <span className="io-value">Updated quarterly with new financial reports</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bento-item module-trading">
+          <div className="module-content-wrapper">
+            <div className="module-header">
+              <div className="module-icon">💹</div>
+              <h2>Trading Execution</h2>
+            </div>
+            <div className="module-links">
+              <a href="/trading-agent" className="module-link-button small">查看績效</a>
+            </div>
+            <p className="module-description">Makes daily trading decisions within your selected portfolio, optimizing when to buy, sell, or hold each stock to maximize overall returns.</p>
+            <div className="io-panel">
+              <div className="io-item">
+                <span className="io-label">Considers</span>
+                <span className="io-value">Market patterns, portfolio status, and cash</span>
+              </div>
+              <div className="io-item">
+                <span className="io-label">Decides</span>
+                <span className="io-value">Precise buy/sell amounts for each stock</span>
+              </div>
+              <div className="io-item">
+                <span className="io-label">Targets</span>
+                <span className="io-value">Maximum portfolio growth over time</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div className="bento-item flow-diagram-bento">
           <h2>Process Flow</h2>
           <div className="flow-diagram">
@@ -54,10 +159,6 @@ const IntroductionBento = () => {
                 <div className="stage-content">
                   <h3>
                     GAT Network
-                    <div className="module-links">
-                      <a href="/stock-relation-graph" className="module-link-button">查看關係圖</a>
-                      <a href="/stock-relation-analysis" className="module-link-button">查看分析</a>
-                    </div>
                   </h3>
                   <p>Analyzes stock relationships through financial reports</p>
                   <div className="tech-details">
@@ -74,9 +175,6 @@ const IntroductionBento = () => {
                 <div className="stage-content">
                   <h3>
                     Stock Selection Agent (PPO)
-                    <div className="module-links">
-                      <a href="/trading-strategy" className="module-link-button">查看策略</a>
-                    </div>
                   </h3>
                   <p>Creates a low-risk portfolio using the GAT network insights</p>
                   <div className="tech-details">
@@ -126,9 +224,6 @@ const IntroductionBento = () => {
                 <div className="stage-content">
                   <h3>
                     Trading Agent (PPO)
-                    <div className="module-links">
-                      <a href="/trading-performance" className="module-link-button">查看績效</a>
-                    </div>
                   </h3>
                   <p>Optimizes daily trading within the selected portfolio</p>
                   <div className="tech-details">
@@ -146,9 +241,6 @@ const IntroductionBento = () => {
               <div className="output-box">
                 <h3>
                   Final Output
-                  <div className="module-links light">
-                    <a href="/trading-performance" className="module-link-button">查看績效</a>
-                  </div>
                 </h3>
                 <p>Optimized trading decisions that balance risk and return</p>
                 <ul>
@@ -156,97 +248,6 @@ const IntroductionBento = () => {
                   <li>Maximized returns through trading strategy</li>
                 </ul>
               </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bento-item module-gat">
-          <div className="module-header">
-            <div className="module-icon">📊</div>
-            <h2>
-              Stock Relationships
-              <div className="module-links">
-                <a href="/stock-relation-graph" className="module-link-button small">關係圖</a>
-                <a href="/stock-relation-analysis" className="module-link-button small">分析</a>
-              </div>
-            </h2>
-          </div>
-          <p>Discovers hidden connections between stocks by analyzing financial reports, revealing which companies influence each other in the market.</p>
-          <div className="io-panel">
-            <div className="io-item">
-              <span className="io-label">Analyzes</span>
-              <span className="io-value">Quarterly financial data from 74 companies</span>
-            </div>
-            <div className="io-item">
-              <span className="io-label">Provides</span>
-              <span className="io-value">A map of stock correlations and influences</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bento-item module-stock-picked">
-          <div className="module-header">
-            <div className="module-icon">🎯</div>
-            <h2>
-              Portfolio Builder
-              <div className="module-links">
-                <a href="/trading-strategy" className="module-link-button small">查看策略</a>
-              </div>
-            </h2>
-          </div>
-          <p>Creates a low-risk investment portfolio by identifying which stocks work well together, balancing potential returns against market volatility.</p>
-          <div className="io-panel">
-            <div className="io-item">
-              <span className="io-label">Considers</span>
-              <span className="io-value">Stock relationships and financial health</span>
-            </div>
-            <div className="io-item">
-              <span className="io-label">Selects</span>
-              <span className="io-value">The ideal mix of stocks for lower risk</span>
-            </div>
-            <div className="io-item">
-              <span className="io-label">Strategy</span>
-              <span className="io-value">Risk-minimization through diversification</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bento-item module-tcn">
-          <div className="module-header">
-            <div className="module-icon">🔄</div>
-            <h2>Pattern Recognition</h2>
-          </div>
-          <p>Identifies important patterns in stock price movements by analyzing technical indicators, helping predict future market behavior.</p>
-          <div className="io-panel">
-            <div className="io-item">
-              <span className="io-label">Monitors</span>
-              <span className="io-value">Price movements and market indicators</span>
-            </div>
-            <div className="io-item">
-              <span className="io-label">Extracts</span>
-              <span className="io-value">Key patterns that signal market trends</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bento-item module-trading">
-          <div className="module-header">
-            <div className="module-icon">💹</div>
-            <h2>Trading Execution</h2>
-          </div>
-          <p>Makes daily trading decisions within your selected portfolio, optimizing when to buy, sell, or hold each stock to maximize overall returns.</p>
-          <div className="io-panel">
-            <div className="io-item">
-              <span className="io-label">Considers</span>
-              <span className="io-value">Market patterns, portfolio status, and cash</span>
-            </div>
-            <div className="io-item">
-              <span className="io-label">Decides</span>
-              <span className="io-value">Precise buy/sell amounts for each stock</span>
-            </div>
-            <div className="io-item">
-              <span className="io-label">Targets</span>
-              <span className="io-value">Maximum portfolio growth over time</span>
             </div>
           </div>
         </div>
