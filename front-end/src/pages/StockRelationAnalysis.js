@@ -1242,21 +1242,21 @@ const StockRelationAnalysis = () => {
     // 渲染熱圖頁面
     const renderHeatmapTabPane = () => {
         return (
-            <TabPane tab="相關性熱圖" key="1">
-                <Card>
-                    <div className="control-group">
+                <TabPane tab="相關性熱圖" key="1">
+                    <Card>
+                        <div className="control-group">
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', marginBottom: '15px' }}>
                         <div>
                         <Tooltip title="關聯閾值用於過濾數據，只有高於此閾值的相關性才會被顯示。較高閾值可突顯重要關聯，較低閾值可展示更多資訊。使用滑桿調整閾值，可直接觀察不同強度的關聯關係。">
-                            <span>關聯閾值：{thresholdValue.toFixed(6)}</span>
-                        </Tooltip>
-                        <Slider
-                            className="slider-control"
+                                <span>關聯閾值：{thresholdValue.toFixed(6)}</span>
+                            </Tooltip>
+                            <Slider
+                                className="slider-control"
                             min={0.0300}
-                            max={0.0345}
-                            step={0.0001}
-                            value={thresholdValue}
-                            onChange={setThresholdValue}
+                                max={0.0345}
+                                step={0.0001}
+                                value={thresholdValue}
+                                onChange={setThresholdValue}
                             style={{ width: '300px' }}
                             />
                         </div>
@@ -1286,7 +1286,7 @@ const StockRelationAnalysis = () => {
                         </div>
                         
                         <div className="date-navigation">
-                        <Button 
+                            <Button 
                                 icon="left" 
                                 onClick={goToPreviousDate} 
                                 disabled={!selectedDate || availableDates.length <= 1}
@@ -1300,49 +1300,49 @@ const StockRelationAnalysis = () => {
                                 disabled={!selectedDate || availableDates.length <= 1}
                             >
                                 下一日
-                        </Button>
+                            </Button>
                         </div>
                     </div>
-                    </div>
-                    
+                        </div>
+                        
                 <div id="heatmap-container" className="heatmap-container">
-                        {loading ? (
-                            <div className="loading-spinner">
-                                <Spin size="large" />
-                            </div>
-                        ) : (
-                            <ReactECharts 
-                                option={getHeatmapOption()} 
-                                className="heatmap-wrapper"
-                                opts={{ renderer: 'canvas' }}
-                                notMerge={true}
+                            {loading ? (
+                                <div className="loading-spinner">
+                                    <Spin size="large" />
+                                </div>
+                            ) : (
+                                <ReactECharts 
+                                    option={getHeatmapOption()} 
+                                    className="heatmap-wrapper"
+                                    opts={{ renderer: 'canvas' }}
+                                    notMerge={true}
                             style={{ 
                                 height: '1200px', 
                                 width: '100%',
                                 backgroundColor: '#ffffff' // 確保組件容器的背景色也是白色
                             }}
-                            />
-                        )}
-                    </div>
-                    <div className="guide-section">
-                        <h3>熱圖解讀指南</h3>
-                        <ul>
-                            <li>顏色越深表示兩支股票的相關性越強，從柔和到深色的變化表示相關性強度的增加</li>
+                                />
+                            )}
+                        </div>
+                        <div className="guide-section">
+                            <h3>熱圖解讀指南</h3>
+                            <ul>
+                                <li>顏色越深表示兩支股票的相關性越強，從柔和到深色的變化表示相關性強度的增加</li>
                         <li>對角線上為股票與自身的相關性</li>
-                            <li>您可以使用底部和右側的縮放條來放大查看感興趣的區域</li>
-                            <li>使用上方的產業標籤可以快速聚焦於特定產業內的股票關聯性</li>
-                            <li>GAT精細視圖專為GAT模型數據特性優化，能更好地展示0.033左右的微小差異</li>
-                            <li>通過「關聯閾值」滑桿調整顯示的數據範圍，較高閾值會過濾掉低關聯度的數據點</li>
-                            <li>正方形格子提供更整齊的視覺效果，每個格子的X軸和Y軸長度相等</li>
-                            <li>當資料集中在非常接近的數值範圍（如0.033-0.034）時，色階映射會自動調整以突顯微小差異</li>
+                                <li>您可以使用底部和右側的縮放條來放大查看感興趣的區域</li>
+                                <li>使用上方的產業標籤可以快速聚焦於特定產業內的股票關聯性</li>
+                                <li>GAT精細視圖專為GAT模型數據特性優化，能更好地展示0.033左右的微小差異</li>
+                                <li>通過「關聯閾值」滑桿調整顯示的數據範圍，較高閾值會過濾掉低關聯度的數據點</li>
+                                <li>正方形格子提供更整齊的視覺效果，每個格子的X軸和Y軸長度相等</li>
+                                <li>當資料集中在非常接近的數值範圍（如0.033-0.034）時，色階映射會自動調整以突顯微小差異</li>
                         <li>使用頁面中的「上一日」和「下一日」按鈕可輕鬆切換不同日期的熱圖，比較市場結構變化</li>
-                        </ul>
-                    </div>
-                </Card>
-            </TabPane>
+                            </ul>
+                        </div>
+                    </Card>
+                </TabPane>
         );
     };
-                    
+                
     // 渲染時間序列頁面
     const renderTimeSeriesTabPane = () => {
         return (
@@ -1413,7 +1413,7 @@ const StockRelationAnalysis = () => {
                                 </Tooltip>
                             </div>
                         </div>
-                    </div>
+                        </div>
                         <div className="timeseries-container">
                             {timeSeriesLoading ? (
                                 <div className="loading-spinner">
@@ -1447,7 +1447,7 @@ const StockRelationAnalysis = () => {
                 </TabPane>
         );
     };
-                    
+                
     // 渲染關聯排行榜頁面
     const renderRankingTabPane = () => {
         return (
