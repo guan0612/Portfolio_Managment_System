@@ -2,6 +2,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  padding: 20px;
 }
 
 .stock-graph-card {
@@ -10,26 +11,61 @@
   flex-direction: column;
   min-height: 0;
   margin: 0 !important; /* 移除 Card 的默认外边距 */
+  width: 100%;
+  margin-bottom: 20px;
 }
 
 .loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 400px;
-  font-size: 16px;
+  height: 100%;
+  font-size: 18px;
   color: #666;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .graph-content {
   width: 100%;
   flex: 1;
   min-height: 0; /* 重要：防止flex子元素溢出 */
+  height: 800px;
+  width: 100%;
+  position: relative;
 }
 
 /* 确保echarts容器适应父容器 */
 .echarts-for-react {
   width: 100% !important;
   height: 100% !important;
-  min-height: 600px;
+  min-height: 800px;
+}
+
+.control-space {
+  margin-bottom: 20px;
+}
+
+.control-item {
+  min-width: 200px;
+}
+
+.threshold-text {
+  margin: 0 10px;
+}
+
+/* 柱状图样式 */
+.bar-chart-container {
+  margin-top: 20px;
+  height: 500px;
+  width: 100%;
+}
+
+.bar-chart-title {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: bold;
 }

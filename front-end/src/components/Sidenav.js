@@ -4,17 +4,19 @@ import { Link } from 'react-router-dom';
 
 const Sidenav = () => {
   const menuItems = [
-    { to: '/introduction-bento', icon: '📖', text: 'Introduction' },
-    { to: '/stock-graph', icon: '🕸️', text: 'Stock Relation Graph' },
+    { to: '/introduction', icon: '📖', text: 'Introduction' },
+    { to: '/stock-relation-graph', icon: '🕸️', text: 'Stock Relation Graph' },
+    { to: '/stock-relation-analysis', icon: '🔍', text: 'Stock Relation Analysis' },
     { to: '/trading-strategy', icon: '💰', text: 'Trading Strategy' },
-    { to: '/settings', icon: '⚙️', text: 'Settings' },
-    { to: '/trading-performance', icon: '📈', text: 'Trading Performance' }, // 新增這一行
   ];
 
   return (
     <div className="sidenav">
       <div className="sidenav-header">
-        <h2>Menu</h2>
+        <Link to="/" className="logo-link">
+          <img src="/logo.png" alt="Logo" className="sidenav-logo" />
+          <h3 className="sidenav-title">Portfolio-Management<br />via RL and GAT</h3>
+        </Link>
       </div>
       <nav className="sidenav-menu">
         <ul>

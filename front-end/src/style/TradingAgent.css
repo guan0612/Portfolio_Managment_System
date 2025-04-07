@@ -1,0 +1,308 @@
+.trading-agent-container {
+  padding: 20px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.summary-section {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 200px;
+  text-align: center;
+}
+
+.return-value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.positive {
+  color: #4caf50;
+}
+
+.negative {
+  color: #f44336;
+}
+
+.chart-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 30px;
+  overflow: hidden;
+}
+
+.chart-container h2 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.2em;
+}
+
+.actions-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.date-selector {
+  margin-bottom: 20px;
+}
+
+.date-selector select {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  margin-left: 10px;
+}
+
+.actions-table {
+  margin-top: 30px;
+}
+
+.actions-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.actions-table th, .actions-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.actions-table th {
+  background-color: #f5f5f5;
+}
+
+.buy {
+  color: #4caf50;
+}
+
+.sell {
+  color: #f44336;
+}
+
+.trading-performance-loading, .trading-performance-error {
+  text-align: center;
+  padding: 50px;
+  font-size: 18px;
+}
+
+.trading-performance-error {
+  color: #f44336;
+}
+
+.recharts-tooltip-wrapper {
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.display-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.display-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.display-toggle input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.industry-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 20px 0;
+}
+
+.industry-label {
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.industry-label:hover {
+  opacity: 0.9;
+}
+
+.custom-tooltip {
+  background-color: rgba(255, 255, 255, 0.96);
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.custom-tooltip p {
+  margin: 0;
+  padding: 3px 0;
+}
+
+.display-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.view-mode-toggle {
+  display: flex;
+  gap: 15px;
+}
+
+.view-mode-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.view-mode-toggle input[type="radio"] {
+  cursor: pointer;
+}
+
+.date-range-slider {
+  margin: 20px 40px;
+  padding: 10px 0;
+}
+
+.date-range-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.date-slider {
+  padding: 4px 0;
+}
+
+.date-slider .rc-slider-track {
+  background-color: #8884d8;
+}
+
+.date-slider .rc-slider-handle {
+  border-color: #8884d8;
+  background-color: #fff;
+}
+
+.date-slider .rc-slider-handle:hover {
+  border-color: #6c6aad;
+}
+
+.date-slider .rc-slider-handle:active {
+  border-color: #6c6aad;
+  box-shadow: 0 0 5px #6c6aad;
+}
+
+.daily-table {
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.daily-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.daily-table th,
+.daily-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.daily-table th {
+  background-color: #f5f5f5;
+  font-weight: 500;
+}
+
+.daily-table .trades-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.daily-table .trades-list span {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.daily-table .trades-list .buy {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.daily-table .trades-list .sell {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.daily-table .positive {
+  color: #4caf50;
+}
+
+.daily-table .negative {
+  color: #f44336;
+}
+
+/* 為每個產業創建一個 class */
+.industry-水泥工業 { background-color: #2E7D32; }
+.industry-塑膠工業 { background-color: #1B5E20; }
+.industry-鋼鐵工業 { background-color: #33691E; }
+.industry-食品工業 { background-color: #F57F17; }
+.industry-紡織纖維 { background-color: #FF6F00; }
+.industry-電機機械 { background-color: #E65100; }
+.industry-橡膠工業 { background-color: #EF6C00; }
+.industry-汽車工業 { background-color: #FF5722; }
+.industry-半導體業 { background-color: #1976D2; }
+.industry-電腦及週邊設備業 { background-color: #0277BD; }
+.industry-光電業 { background-color: #01579B; }
+.industry-通信網路業 { background-color: #0288D1; }
+.industry-電子零組件業 { background-color: #039BE5; }
+.industry-金融保險業 { background-color: #6A1B9A; }
+.industry-貿易百貨業 { background-color: #4A148C; }
+.industry-航運業 { background-color: #283593; }
+.industry-油電燃氣業 { background-color: #1A237E; }
+.industry-建材營造業 { background-color: #3949AB; }
+.industry-其他電子業 { background-color: #5C6BC0; }
+.industry-其他 { background-color: #7986CB; }
+
+/* 為 tooltip 項目添加樣式 */
+.tooltip-item {
+  color: attr(data-color);
+}
+
+/* 座標軸標籤樣式 */
+.axis-label {
+  text-anchor: middle;
+  fill: #666;
+  font-size: 0.9em;
+}
