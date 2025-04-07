@@ -3,6 +3,7 @@ import ReactECharts from 'echarts-for-react';
 import Papa from 'papaparse';
 import TradingAgent from './TradingAgent';
 
+const API_URL = process.env.REACT_APP_API_URL;
 const TradingStrategy = () => {
   const [stockData, setStockData] = useState([]);
   const [dates, setDates] = useState([]);
@@ -62,7 +63,7 @@ const TradingStrategy = () => {
 
   useEffect(() => {
     // Fetch the CSV data with the full URL
-    fetch('http://localhost:5000/api/low-risk-stocks')
+    fetch(`${API_URL}/api/low-risk-stocks`)
       .then(response => response.text())
       .then(csvText => {
         Papa.parse(csvText, {

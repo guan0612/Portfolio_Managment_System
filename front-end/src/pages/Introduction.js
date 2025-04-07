@@ -1,7 +1,7 @@
 import React from 'react';
-import '../style/IntroductionBento.css';
+import '../style/Introduction.css';
 
-const IntroductionBento = () => {
+const Introduction = () => {
   return (
     <div className="introduction-bento">
       <div className="header">
@@ -310,4 +310,4 @@ const IntroductionBento = () => {
   );
 };
 
-export default IntroductionBento; 
+export default Introduction; 

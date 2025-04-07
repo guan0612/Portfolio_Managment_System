@@ -7,6 +7,7 @@ import { stockIndustries, getAllIndustries } from '../data/stockIndustries';
 import { industryColors } from '../data/industryColors';
 
 const { Option } = Select;
+const API_URL = process.env.REACT_APP_API_URL;
 
 const StockRelationGraph = () => {
     const [graphData, setGraphData] = useState({ nodes: [], links: [] });
@@ -45,7 +46,7 @@ const StockRelationGraph = () => {
 
     // 取得可用日期
     useEffect(() => {
-        fetch('http://localhost:5000/gat/dates')
+        fetch(`${API_URL}/gat/dates`)
             .then(response => response.json())
             .then(dates => {
                 setAvailableDates(dates);
@@ -79,7 +80,7 @@ const StockRelationGraph = () => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const response = await fetch(`http://localhost:5000/gat/${selectedDate}`);
+                const response = await fetch(`${API_URL}/gat/${selectedDate}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }

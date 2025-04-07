@@ -11,6 +11,7 @@ import '../style/TradingAgent.css';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 
+const API_URL = process.env.REACT_APP_API_URL;
 const TradingAgent = () => {
   const [performanceData, setPerformanceData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +23,7 @@ const TradingAgent = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/trading-performance');
+        const response = await axios.get(`${API_URL}/trading-performance`);
         setPerformanceData(response.data);
         // 設置所有可用日期
         const dates = response.data.account_value.map(item => item.date);

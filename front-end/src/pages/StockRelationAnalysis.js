@@ -8,6 +8,7 @@ import '../style/StockRelationAnalysis.css';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
+const API_URL = process.env.REACT_APP_API_URL;
 
 // 定義多種色階方案
 const colorSchemes = {
@@ -79,7 +80,7 @@ const StockRelationAnalysis = () => {
 
     // 獲取日期列表
     useEffect(() => {
-        fetch('http://localhost:5000/gat/dates')
+        fetch(`${API_URL}/gat/dates`)
             .then(response => response.json())
             .then(dates => {
                 setAvailableDates(dates.sort((a, b) => new Date(b) - new Date(a)));
@@ -95,7 +96,7 @@ const StockRelationAnalysis = () => {
         if (!selectedDate) return;
         
         setLoading(true);
-        fetch(`http://localhost:5000/gat/${selectedDate}`)
+        fetch(`${API_URL}/gat/${selectedDate}`)
             .then(response => response.json())
             .then(data => {
                 if (Array.isArray(data)) {
@@ -133,7 +134,7 @@ const StockRelationAnalysis = () => {
         
         // 使用Promise.all批量獲取數據
         Promise.all(datesToFetch.map(date => 
-            fetch(`http://localhost:5000/gat/${date}`)
+            fetch(`${API_URL}/gat/${date}`)
                 .then(response => response.json())
                 .then(data => {
                     if (Array.isArray(data)) {
@@ -871,7 +872,7 @@ const StockRelationAnalysis = () => {
         if (!selectedDate) return;
         
         setDistributionLoading(true);
-        fetch(`http://localhost:5000/gat/${selectedDate}`)
+        fetch(`${API_URL}/gat/${selectedDate}`)
             .then(response => response.json())
             .then(data => {
                 if (Array.isArray(data)) {

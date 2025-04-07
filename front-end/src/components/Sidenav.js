@@ -13,7 +13,10 @@ const Sidenav = () => {
   return (
     <div className="sidenav">
       <div className="sidenav-header">
-        <h2>Menu</h2>
+        <Link to="/" className="logo-link">
+          <img src="/logo.png" alt="Logo" className="sidenav-logo" />
+          <h3 className="sidenav-title">Portfolio-Management<br />via RL and GAT</h3>
+        </Link>
       </div>
       <nav className="sidenav-menu">
         <ul>
