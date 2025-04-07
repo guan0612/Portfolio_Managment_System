@@ -1,0 +1,52 @@
+version: '3.3'
+
+services:
+  # Nginx 反向代理
+  nginx:
+    image: nginx:latest
+    ports:
+      - "3001:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app-network
+
+  # 前端服務
+  frontend:
+    build:
+      context: ./front-end
+      dockerfile: dockerfile
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_URL=/api
+      - REACT_APP_WS_URL=ws://140.115.54.36:3001/ws
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  # 後端服務
+  backend:
+    build:
+      context: ./back-end
+      dockerfile: dockerfile
+    expose:
+      - "5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=app.py
+    volumes:
+      - ./back-end:/app
+    networks:
+      - app-network
+
+# 定義網路
+networks:
+  app-network:
+    driver: bridge 

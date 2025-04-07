@@ -1,0 +1,28 @@
+# 排除 node_modules 目錄
+node_modules
+
+# 排除建置目錄
+build
+dist
+
+# 排除版本控制相關檔案
+.git
+.gitignore
+
+# 排除環境設定檔
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# 排除日誌檔案
+*.log
+
+# 排除 Docker 相關檔案
+Dockerfile
+.dockerignore
+
+# 排除系統檔案
+.DS_Store
+Thumbs.db
