@@ -1,15 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { 
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  ComposedChart, Line, Bar, ReferenceLine
-} from 'recharts';
-import { stockNames } from '../data/stockNames';
-import { stockIndustries } from '../data/stockIndustries';
-import { industryColors } from '../data/industryColors';
-import '../style/TradingAgent.css';
-import Slider from 'rc-slider';
-import 'rc-slider/assets/index.css';
+
+import React from 'react';
+import TradingPerformance from './TradingPerformance';
 
 const API_URL = process.env.REACT_APP_API_URL;
 const TradingAgent = () => {
@@ -324,152 +315,14 @@ const TradingAgent = () => {
   const chartData = prepareChartData();
   
   return (
-    <div className="trading-agent-container">
-      <div className="chart-container">
-        <div className="chart-header">
-          <h2>交易行為與累積報酬率</h2>
-          <div className="display-controls">
-            <div className="display-toggle">
-              <div className="view-mode-toggle">
-                <label>
-                  <input
-                    type="radio"
-                    name="displayMode"
-                    value="code"
-                    checked={!showStockName}
-                    onChange={() => setShowStockName(false)}
-                  />
-                  顯示股票代號
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="displayMode"
-                    value="name"
-                    checked={showStockName}
-                    onChange={() => setShowStockName(true)}
-                  />
-                  顯示公司名稱
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* 新增表格 */}
-        {renderDailyTable()}
-        
-        <div className="industry-labels">
-          {renderIndustryLabels()}
-        </div>
-        
-        <ResponsiveContainer width="100%" height={400}>
-          <ComposedChart
-            data={getFilteredChartData()}
-            margin={{ top: 40, right: 30, left: 20, bottom: 20 }}
-          >
-            <ReferenceLine 
-              y={0} 
-              yAxisId="left"
-              stroke="#666"
-              strokeWidth={2}
-            />
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="date" 
-              label={{ 
-                value: '日期', 
-                position: 'insideBottom',
-                offset: -5
-              }}
-            />
-            <YAxis 
-              yAxisId="left"
-              label={{ 
-                value: '交易量/張', 
-                position: 'top',
-                offset: 20,
-                className: 'axis-label'
-              }}
-            />
-            <YAxis 
-              yAxisId="right" 
-              orientation="right"
-              tickFormatter={(value) => `${(value * 100).toFixed(2)}%`}
-              label={{ 
-                value: '累積報酬率', 
-                position: 'top',
-                offset: 20,
-                className: 'axis-label'
-              }}
-              domain={[-0.03, 0.03]}
-            />
-            <Tooltip content={renderTooltip} />
-            <Legend 
-              verticalAlign="bottom"
-              margin={{ top:20 }}
-              formatter={(value) => {
-                if (!value) return '';  // 處理未定義的值
-                if (value === "累積報酬率") return value;
-                
-                // 從 Bar 的 dataKey 中提取股票代碼
-                if (!value.includes('_')) {
-                  return getStockDisplayName(value);  // 使用 getStockDisplayName 來處理顯示
-                }
-                // 如果是 dataKey（來自 Bar）
-                const stockCode = value.split('_')[2];
-                return stockCode ? getStockDisplayName(stockCode) : value;
-              }}
-              // 自定義圖例項目
-              payload={[
-                // 添加累積報酬率
-                {
-                  value: "累積報酬率",
-                  type: "line",
-                  color: "#8884d8"
-                },
-                // 只顯示有交易的股票
-                ...Array.from(new Set(
-                  performanceData.stocks
-                    .filter(stock => {
-                      return performanceData.actions.some(day => {
-                        const action = day[stock];
-                        return action !== 0 && action !== undefined;
-                      });
-                    })
-                )).map(stockCode => ({
-                  value: stockCode,  // 保持原始股票代碼
-                  type: "rect",
-                  color: getStockColor(stockCode)
-                }))
-              ]}
-            />
-            <Line 
-              yAxisId="right"
-              type="monotone" 
-              dataKey="cumulative_return" 
-              stroke="#8884d8"
-              name="累積報酬率"
-              dot={{ r: 3 }}
-            />
-            
-            {renderBars()}
-          </ComposedChart>
-        </ResponsiveContainer>
-        
-        <div className="date-range-slider">
-          <div className="date-range-labels">
-            <span>{allDates[Math.floor(allDates.length * dateRange[0] / 100)]}</span>
-            <span>{allDates[Math.ceil(allDates.length * dateRange[1] / 100) - 1]}</span>
-          </div>
-          <Slider
-            range
-            value={dateRange}
-            onChange={handleDateRangeChange}
-            className="date-slider"
-          />
-        </div>
-      </div>
+    <div style={{ 
+      backgroundColor: 'white',
+      borderRadius: '8px',
+      padding: '20px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      marginBottom: '20px'
+    }}>
+      <TradingPerformance />
     </div>
   );
 };
