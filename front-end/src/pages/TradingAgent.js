@@ -1,16 +1,30 @@
-
-import React from 'react';
-import TradingPerformance from './TradingPerformance';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Bar } from 'recharts';
+import { useNavigate } from 'react-router-dom';
+import { stockNames } from '../data/stockNames';
+import { stockIndustries } from '../data/stockIndustries';
+import { industryColors } from '../data/industryColors';
+import '../style/TradingAgent.css';
 
 const API_URL = process.env.REACT_APP_API_URL;
 const TradingAgent = () => {
+  const navigate = useNavigate();
   const [performanceData, setPerformanceData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showStockName, setShowStockName] = useState(false);
   const [dateRange, setDateRange] = useState([0, 100]); // 百分比值
   const [allDates, setAllDates] = useState([]); // 存儲所有可用日期
+  const [activeTab, setActiveTab] = useState('agent'); // Default to agent tab
   
+  // Handle tab change
+  const handleTabChange = (tab) => {
+    if (tab === 'strategy') {
+      navigate('/trading-strategy');
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -315,14 +329,111 @@ const TradingAgent = () => {
   const chartData = prepareChartData();
   
   return (
-    <div style={{ 
-      backgroundColor: 'white',
-      borderRadius: '8px',
-      padding: '20px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      marginBottom: '20px'
-    }}>
-      <TradingPerformance />
+    <div className="trading-agent-container">
+      {/* Navigation tabs */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '20px'
+      }}>
+        <h1 style={{ fontSize: '24px', margin: 0 }}>Trading Agent</h1>
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          backgroundColor: '#fff',
+          padding: '4px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          <button
+            onClick={() => handleTabChange('strategy')}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              backgroundColor: activeTab === 'strategy' ? '#1890ff' : 'transparent',
+              color: activeTab === 'strategy' ? '#fff' : '#666',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 500,
+              transition: 'all 0.3s'
+            }}
+          >
+            Stock-Picked Agent
+          </button>
+          <button
+            onClick={() => setActiveTab('agent')}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              backgroundColor: activeTab === 'agent' ? '#1890ff' : 'transparent',
+              color: activeTab === 'agent' ? '#fff' : '#666',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 500,
+              transition: 'all 0.3s'
+            }}
+          >
+            Trading Agent
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ 
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        padding: '20px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        marginBottom: '20px'
+      }}>
+        <h2>Trading Agent Performance</h2>
+        
+        {/* Add controls for date range and display options */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          marginBottom: '20px',
+          padding: '10px',
+          backgroundColor: '#f5f5f5',
+          borderRadius: '8px'
+        }}>
+          <div>
+            <label style={{ marginRight: '10px' }}>
+              <input 
+                type="checkbox" 
+                checked={showStockName} 
+                onChange={(e) => setShowStockName(e.target.checked)}
+                style={{ marginRight: '5px' }}
+              />
+              Show Stock Names
+            </label>
+          </div>
+        </div>
+        
+        {/* Industry labels */}
+        <div style={{ marginBottom: '20px' }}>
+          <h3>Industries</h3>
+          <div style={{ 
+            display: 'flex', 
+            flexWrap: 'wrap', 
+            gap: '10px',
+            padding: '10px',
+            backgroundColor: '#f9f9f9',
+            borderRadius: '8px' 
+          }}>
+            {renderIndustryLabels()}
+          </div>
+        </div>
+        
+        {/* Daily performance table */}
+        <div>
+          <h3>Daily Performance</h3>
+          {renderDailyTable()}
+        </div>
+      </div>
     </div>
   );
 };

@@ -23,9 +23,14 @@ services:
     expose:
       - "3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - REACT_APP_API_URL=/api
       - REACT_APP_WS_URL=ws://140.115.54.36:3001/ws
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./front-end:/app
+      - /app/node_modules
     depends_on:
       - backend
     networks:
@@ -39,7 +44,7 @@ services:
     expose:
       - "5000"
     environment:
-      - FLASK_ENV=production
+      - FLASK_ENV=development
       - FLASK_APP=app.py
     volumes:
       - ./back-end:/app
