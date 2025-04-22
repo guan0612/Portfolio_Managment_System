@@ -80,7 +80,7 @@ const StockRelationAnalysis = () => {
 
     // 獲取日期列表
     useEffect(() => {
-        fetch(`${API_URL}/gat/dates`)
+        fetch(`${API_URL}/dates`)
             .then(response => response.json())
             .then(dates => {
                 setAvailableDates(dates.sort((a, b) => new Date(b) - new Date(a)));
@@ -96,7 +96,7 @@ const StockRelationAnalysis = () => {
         if (!selectedDate) return;
         
         setLoading(true);
-        fetch(`${API_URL}/gat/${selectedDate}`)
+        fetch(`${API_URL}/${selectedDate}`)
             .then(response => response.json())
             .then(data => {
                 if (Array.isArray(data)) {
@@ -134,7 +134,7 @@ const StockRelationAnalysis = () => {
         
         // 使用Promise.all批量獲取數據
         Promise.all(datesToFetch.map(date => 
-            fetch(`${API_URL}/gat/${date}`)
+            fetch(`${API_URL}/${date}`)
                 .then(response => response.json())
                 .then(data => {
                     if (Array.isArray(data)) {
@@ -169,17 +169,32 @@ const StockRelationAnalysis = () => {
 
     // 更新與所選股票關聯度最高的股票列表
     const updateTopCorrelatedStocks = () => {
-        // 這個函數用於找出與選定股票關聯度最高的前5支股票
-        // 它不依賴於timeSeriesData，而是每次都重新計算當前日期下的關聯度
-        const result = getTopCorrelationsForStock(selectedStock);
-        const topStocks = result.stocks && result.stocks.length > 0 
-            ? result.stocks.slice(0, 5).map(item => item.stock)
-            : [];
+        if (!selectedStock || correlationData.length === 0 || stockList.length === 0) return;
         
-        // 打印日誌，説明更新邏輯
-        console.log(`更新${selectedStock}在${selectedDate}的前5支關聯股票:`, topStocks);
+        // 找到選定股票在列表中的索引
+        const stockIndex = stockList.indexOf(selectedStock);
+        if (stockIndex === -1) return;
         
-        setTopCorrelatedStocks(topStocks);
+        // 獲取相關係數
+        const correlations = [];
+        stockList.forEach((targetStock, i) => {
+            if (targetStock !== selectedStock) {
+                const value = correlationData[stockIndex][targetStock];
+                if (value && value >= thresholdValue) {
+                    correlations.push({
+                        stock: targetStock,
+                        correlation: value
+                    });
+                }
+            }
+        });
+        
+        // 按相關度排序
+        correlations.sort((a, b) => b.correlation - a.correlation);
+        
+        // 取前5支股票
+        const topStocks = correlations.slice(0, 5).map(item => item.stock);
+        return topStocks;
     };
 
     // 計算相關性數據的統計信息
@@ -872,7 +887,7 @@ const StockRelationAnalysis = () => {
         if (!selectedDate) return;
         
         setDistributionLoading(true);
-        fetch(`${API_URL}/gat/${selectedDate}`)
+        fetch(`${API_URL}/${selectedDate}`)
             .then(response => response.json())
             .then(data => {
                 if (Array.isArray(data)) {

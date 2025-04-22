@@ -63,7 +63,7 @@ const TradingStrategy = () => {
 
   useEffect(() => {
     // Fetch the CSV data with the full URL
-    fetch(`${API_URL}/api/low-risk-stocks`)
+    fetch(`${API_URL}/low-risk-stocks`)
       .then(response => response.text())
       .then(csvText => {
         Papa.parse(csvText, {
@@ -89,7 +89,6 @@ const TradingStrategy = () => {
                 data: data.map(row => [row.date, parseInt(row[stock])]),
                 symbol: 'circle',
                 symbolSize: 8,
-                // step: 'middle',
                 lineStyle: {
                   width: 2,
                   opacity: 1,
@@ -124,7 +123,9 @@ const TradingStrategy = () => {
           }
         });
       })
-      .catch(error => console.error('Error fetching data:', error));
+      .catch(error => {
+        console.error('Error fetching CSV data:', error);
+      });
   }, []);
 
   const getOption = () => {
