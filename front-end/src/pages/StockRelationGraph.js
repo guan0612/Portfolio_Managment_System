@@ -21,6 +21,10 @@ const StockRelationGraph = () => {
     const [selectedDate, setSelectedDate] = useState('2024-05-16');
     const [errorMessage, setErrorMessage] = useState('');
     const [barChartData, setBarChartData] = useState([]);
+    const [correlationData, setCorrelationData] = useState([]);
+    const [stockList, setStockList] = useState([]);
+    const [timeSeriesData, setTimeSeriesData] = useState({});
+    const [timeSeriesLoading, setTimeSeriesLoading] = useState(false);
     const allIndustries = getAllIndustries();
 
     // 添加一個輔助函數來獲取完整的股票代碼
@@ -44,18 +48,86 @@ const StockRelationGraph = () => {
         return industryColors[industry] || '#7986CB'; // 預設顏色
     };
 
-    // 取得可用日期
+    // 獲取日期列表
     useEffect(() => {
-        fetch(`${API_URL}/gat/dates`)
+        fetch(`${API_URL}/dates`)
             .then(response => response.json())
             .then(dates => {
-                setAvailableDates(dates);
+                setAvailableDates(dates.sort((a, b) => new Date(b) - new Date(a)));
                 if (dates.length > 0) {
-                    setSelectedDate(dates[0]); // 預設選擇最新日期
+                    setSelectedDate(dates[0]);
                 }
             })
             .catch(error => console.error('Error fetching dates:', error));
     }, []);
+
+    // 當選擇的日期變化時，獲取該日期的相關性數據
+    useEffect(() => {
+        if (!selectedDate) return;
+        
+        setLoading(true);
+        fetch(`${API_URL}/${selectedDate}`)
+            .then(response => response.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setCorrelationData(data);
+                    // 從第一行獲取所有股票代碼
+                    const stocks = Object.keys(data[0]).filter(code => code !== 'Unnamed: 0');
+                    setStockList(stocks);
+                }
+                setLoading(false);
+            })
+            .catch(error => {
+                console.error('Error fetching correlation data:', error);
+                setLoading(false);
+            });
+    }, [selectedDate]);
+
+    // 當選擇的股票變化時，預獲取時間序列數據
+    useEffect(() => {
+        if (!selectedStock || availableDates.length === 0) return;
+        
+        // 更新關聯最高的股票列表，用於時間序列圖
+        updateTopCorrelatedStocks();
+        
+        // 已經有這支股票的數據，不需要重新獲取
+        if (timeSeriesData[selectedStock]) return;
+        
+        setTimeSeriesLoading(true);
+        
+        // 為選中的股票提取過去10個日期的相關性數據
+        const fetchDatesLimit = 10;
+        const datesToFetch = availableDates.slice(0, fetchDatesLimit);
+        
+        // 創建一個對象來存儲每個日期的數據
+        const tempData = {};
+        
+        // 使用Promise.all批量獲取數據
+        Promise.all(datesToFetch.map(date => 
+            fetch(`${API_URL}/${date}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        const stockIndex = Object.keys(data[0])
+                            .filter(code => code !== 'Unnamed: 0')
+                            .indexOf(selectedStock);
+                        
+                        if (stockIndex >= 0) {
+                            tempData[date] = data[stockIndex];
+                        }
+                    }
+                    return date;
+                })
+                .catch(error => {
+                    console.error(`Error fetching correlation data for ${date}:`, error);
+                    return date;
+                })
+        ))
+        .then(() => {
+            setTimeSeriesData(prev => ({...prev, [selectedStock]: tempData}));
+            setTimeSeriesLoading(false);
+        });
+    }, [selectedStock, correlationData]);
 
     // 監聽圖數據變化
     useEffect(() => {
@@ -80,7 +152,7 @@ const StockRelationGraph = () => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const response = await fetch(`${API_URL}/gat/${selectedDate}`);
+                const response = await fetch(`${API_URL}/${selectedDate}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -105,7 +177,7 @@ const StockRelationGraph = () => {
                         
                         // 遍歷該股票與其他股票的關係
                         stockCodes.forEach((targetStock, colIndex) => {
-                            if (rowIndex === colIndex || rowIndex > colIndex) return;  // 跳過自己 or 跳過重複的關係
+                            if (rowIndex === colIndex) return;  // 跳過自己 or 跳過重複的關係
                             
                             const weight = parseFloat(row[targetStock]);
                             
@@ -130,8 +202,8 @@ const StockRelationGraph = () => {
                             nodes: Array.from(nodes).map(code => ({
                                 name: code,
                                 value: links.filter(link => 
-                                    (link.source === code || link.target === code) && link.value > 0 
-                                ).length,
+                                    link.target === code && link.value > 0 
+                                ).length,  // 只計算指向該節點的邊的數量
                                 category: getStockIndustry(code)
                             })),
                             links: links
@@ -174,11 +246,11 @@ const StockRelationGraph = () => {
             return;
         }
 
-        // 找出與搜索股票相關的所有連接
+        // 找出指向選中股票的所有連接
         const EPSILON = 1e-10;  // 添加一個很小的容差值
         const relatedLinks = graphData.links.filter(link => 
-            (link.source === selectedStock || link.target === selectedStock) && 
-            (link.value >= threshold - EPSILON)  // 使用容差值進行比較
+            link.target === selectedStock &&  // 只保留目標是選中股票的邊
+            link.value >= threshold - EPSILON  // 使用容差值進行比較
         );
 
         if (relatedLinks.length === 0) {
@@ -192,45 +264,71 @@ const StockRelationGraph = () => {
         // 如果有找到連接，清除錯誤訊息
         setErrorMessage('');
 
-        // 取得相關節點
+        // 取得相關節點（只包含源節點和目標節點）
         const relatedNodes = new Set();
+        relatedNodes.add(selectedStock); // 添加選中的股票
         relatedLinks.forEach(link => {
-            relatedNodes.add(link.source);
-            relatedNodes.add(link.target);
+            relatedNodes.add(link.source); // 只添加源節點
         });
 
         setHighlightedNodes(Array.from(relatedNodes));
         setHighlightedEdges(relatedLinks);
 
         // 打印相關信息，按照相關度排序
-        console.log(`Stock ${selectedStock} (${getCompanyName(selectedStock)}) connections:`);
+        console.log(`指向 ${selectedStock} (${getCompanyName(selectedStock)}) 的連接:`);
         relatedLinks
             .sort((a, b) => b.value - a.value)  // 依相關度從高到低排序
             .forEach(link => {
                 const sourceName = getCompanyName(link.source);
-                const targetName = getCompanyName(link.target);
-                console.log(`${link.source} (${sourceName}) → ${link.target} (${targetName}): ${link.value.toFixed(5)}`);
+                console.log(`${link.source} (${sourceName}) → ${selectedStock} (${getCompanyName(selectedStock)}): ${link.value.toFixed(5)}`);
             });
 
         // 处理柱状图数据
-        const barData = relatedLinks.map(link => {
-            const targetStock = link.source === selectedStock ? link.target : link.source;
-            return {
-                stock: targetStock,
-                value: link.value,
-                name: getCompanyName(targetStock),
-                industry: getStockIndustry(targetStock)
-            };
-        }).sort((a, b) => b.value - a.value);
+        const barData = relatedLinks.map(link => ({
+            stock: link.source,
+            value: link.value,
+            name: getCompanyName(link.source),
+            industry: getStockIndustry(link.source)
+        })).sort((a, b) => b.value - a.value);
 
         setBarChartData(barData);
+    };
+
+    // 更新關聯最高的股票列表
+    const updateTopCorrelatedStocks = () => {
+        if (!selectedStock || correlationData.length === 0 || stockList.length === 0) return;
+        
+        // 找到選定股票在列表中的索引
+        const stockIndex = stockList.indexOf(selectedStock);
+        if (stockIndex === -1) return;
+        
+        // 獲取相關係數
+        const correlations = [];
+        stockList.forEach((targetStock, i) => {
+            if (targetStock !== selectedStock) {
+                const value = correlationData[stockIndex][targetStock];
+                if (value && value >= threshold) {
+                    correlations.push({
+                        stock: targetStock,
+                        correlation: value
+                    });
+                }
+            }
+        });
+        
+        // 按相關度排序
+        correlations.sort((a, b) => b.correlation - a.correlation);
+        
+        // 取前5支股票
+        const topStocks = correlations.slice(0, 5).map(item => item.stock);
+        return topStocks;
     };
 
     const getOption = () => {
         return {
             title: {
-                text: 'Stock Relation Graph',
-                subtext: 'based on GAT model',
+                text: 'Stock Relation Graph(based on GAT model)',
+                subtext: '邊的方向表示影響關係：A→B 表示 A 對 B 的重要性',
                 top: 'top',
                 left: 'center'
             },
@@ -308,11 +406,13 @@ const StockRelationGraph = () => {
                             opacity: Math.min(link.value * 2, 1),
                             curveness: 0.1
                         },
+                        symbol: ['none', 'arrow'],  // 起點無符號，終點為箭頭
+                        symbolSize: [15, 15],  // 箭頭大小
                         emphasis: {
                             lineStyle: {
-                            width: 6,
-                            opacity: 1
-                        }
+                                width: 6,
+                                opacity: 1
+                            }
                         }
                     })),
                 label: {
