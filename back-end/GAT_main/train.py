@@ -29,7 +29,7 @@ def test(model, criterion, input, target, mask):
         output = output.squeeze(1)
 
         loss = criterion(output, target)
-    return loss.item(), edge
+    return loss.item()
     
 def train_iter(epoch, model, optimizer, criterion, input, target, mask_train, mask_val, F_date, print_every=10):
 
@@ -50,11 +50,10 @@ def train_iter(epoch, model, optimizer, criterion, input, target, mask_train, ma
     optimizer.step()
 
     # Evaluate the model performance on training and validation sets
-    loss_train, edge_train = test(model, criterion, input, target, mask_train)
-    loss_val, edge_val = test(model, criterion, input, target, mask_val)
-    print(f"edge_train: {edge_train}")
-    print(f"edge_val: {edge_val}")
+    loss_train = test(model, criterion, input, target, mask_train)
+    loss_val = test(model, criterion, input, target, mask_val)
 
+    
     if epoch % (print_every*10) == 0:
         # Print the training progress at specified intervals
         print(f'Epoch: {epoch:04d} ({(time.time() - start_t):.4f}s) loss_train: {loss_train:.4f}  loss_val: {loss_val:.4f} ')
@@ -64,8 +63,8 @@ def train_iter(epoch, model, optimizer, criterion, input, target, mask_train, ma
         
     if loss_val <  min_loss_val or epoch == 1:
         min_loss_val = loss_val
-        # 修改这里：先将张量移到 CPU，然后再转换为 NumPy 数组
         numpy_array = edge.detach().cpu().numpy()
+        # 重塑numpy_array為二維數組
         reshaped_array = numpy_array.reshape(-1, numpy_array.shape[2])
         df = pd.DataFrame(reshaped_array)
         
@@ -74,6 +73,12 @@ def train_iter(epoch, model, optimizer, criterion, input, target, mask_train, ma
         
     return loss_train, loss_val
 
+def get_dates_from_csv():
+    # 讀取第一個股票文件來獲取日期
+    first_stock_file = glob.glob("./data/*.csv")[0]  # 獲取第一個CSV文件
+    df = pd.read_csv(first_stock_file)
+    dates = df['date'].unique().tolist()  # 獲取所有不重複的日期
+    return dates
 
 if __name__ == '__main__':
 
@@ -183,14 +188,19 @@ if __name__ == '__main__':
         
         adj_mat = torch.ones((74, 74))
     
-        return feature_tensor,label_tensor,adj_mat
+        # 將所有張量移到同一個設備上
+        feature_tensor = feature_tensor.float().to(device)
+        adj_mat = adj_mat.float().to(device)
+        label_tensor = label_tensor.float().to(device)
+
+        return feature_tensor, label_tensor, adj_mat
  
 
     file_paths = [glob.glob("./data/*.csv")]
     
-    with open('date.txt', 'r') as file:
-        date = file.readlines()  # 读取所有行到一个列表中
-
+    # 替換原來的 date.txt 讀取方式
+    dates = get_dates_from_csv()
+    
     # Create the model
     # The model consists of a 2-layer stack of Graph Attention Layers (GATs).
     gat_net = GAT(
@@ -207,30 +217,21 @@ if __name__ == '__main__':
     optimizer = Adam(gat_net.parameters(), lr=args.lr, weight_decay=args.l2)
     criterion = nn.MSELoss()
     
-    for graph in range(1,2):
-        if graph <= len(date):
-            F_date = date[graph].strip()
+    for graph in range(40, len(dates)+1):
+        if graph <= len(dates):
+            F_date = dates[graph-1]
             print(f"第{graph}筆的資料: {F_date}")
         else:
-            F_date=''
+            F_date = ''
             print(f"第{graph}筆的資料不存在。")
 
-        # 读取数据
-        features, labels, adj_mat = read_data(file_paths,graph)
-        print(f"features: {features.shape}")
-        print(f"labels: {labels.shape}")
-        print(f"adj_mat: {adj_mat.shape}")    
+        features, labels, adj_mat = read_data(file_paths,graph-1)
         
-        # 将所有张量移到同一个设备上
-        features = features.float().to(device)
-        adj_mat = adj_mat.float().to(device)
-        labels = labels.float().to(device)
-        
-        # 创建并移动索引
+        # 創建並移動索引
         idx = torch.randperm(len(labels)).to(device)
         idx_train, idx_val, idx_test = idx[:60], idx[60:68], idx[68:]
         
-        # 初始化损失列表
+        # 初始化損失列表
         train_losses = []
         val_losses = []
         
@@ -245,17 +246,10 @@ if __name__ == '__main__':
                 break
         
         
-        loss_test, edge_test = test(gat_net, criterion, (features, adj_mat), labels, idx_test)
-        print(f"edge_test: {edge_test}")
+        loss_test = test(gat_net, criterion, (features, adj_mat), labels, idx_test)
+        #print(gat_net)
         print(f'Test set results: loss {loss_test:.4f}')
         
-        test_numpy_array = edge_test.detach().cpu().numpy()
-        test_reshaped_array = test_numpy_array.reshape(-1, test_numpy_array.shape[2])
-        test_df = pd.DataFrame(test_reshaped_array)
-        
-        test_file_name = f'tensor_epoch_test.csv'
-        test_df.to_csv(test_file_name, index=False)
-
         # 獲得最小訓練損失及其對應的epoch
         min_train_loss_epoch = train_losses.index(min(train_losses)) + 1  # 索引+1，因為epoch從1開始
         min_train_loss = min(train_losses)
