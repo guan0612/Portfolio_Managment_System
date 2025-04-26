@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_file
 from flask_cors import CORS
 import pandas as pd
 import glob
@@ -74,6 +74,34 @@ def get_low_risk_stocks():
     except Exception as e:
         print(f"Error reading CSV file: {str(e)}")
         return jsonify({"error": "Failed to read CSV file"}), 500
+
+@app.route('/api/sharpe-ratios')
+def get_sharpe_ratios():
+    try:
+        # Get the absolute path to the CSV file
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, 'Stock-Picked Agent', 'SharpeRatio.csv')
+        
+        if not os.path.exists(file_path):
+            return jsonify({'error': f'File not found at {file_path}'}), 404
+        
+        # Read the CSV file using pandas
+        df = pd.read_csv(file_path)
+        
+        # Convert the data to a format suitable for the frontend
+        # Group by stock_id to get time series of Sharpe ratios for each stock
+        sharpe_data = {}
+        for stock_id in df['stock_id'].unique():
+            stock_data = df[df['stock_id'] == stock_id]
+            sharpe_data[stock_id] = {
+                'dates': stock_data['date'].tolist(),
+                'values': stock_data['sharpe_ratio'].tolist()
+            }
+        
+        return jsonify(sharpe_data)
+    except Exception as e:
+        print(f"Error reading Sharpe ratio file: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

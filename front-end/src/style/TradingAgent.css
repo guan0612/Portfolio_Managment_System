@@ -24,11 +24,11 @@
 }
 
 .positive {
-  color: #4caf50;
+  color: #52c41a;
 }
 
 .negative {
-  color: #f44336;
+  color: #ff4d4f;
 }
 
 .chart-container {
@@ -91,14 +91,22 @@
   color: #f44336;
 }
 
-.trading-performance-loading, .trading-performance-error {
+.trading-performance-loading,
+.trading-performance-error {
+  padding: 20px;
   text-align: center;
-  padding: 50px;
-  font-size: 18px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.trading-performance-loading {
+  background-color: #f0f5ff;
+  color: #1890ff;
 }
 
 .trading-performance-error {
-  color: #f44336;
+  background-color: #fff1f0;
+  color: #ff4d4f;
 }
 
 .recharts-tooltip-wrapper {
@@ -139,11 +147,12 @@
 }
 
 .industry-label {
-  padding: 4px 8px;
+  padding: 5px 10px;
   border-radius: 4px;
-  color: white;
-  font-size: 0.9em;
-  white-space: nowrap;
+  font-size: 12px;
+  background-color: #f0f2f5;
+  color: #666;
+  display: inline-block;
 }
 
 .industry-label:hover {
@@ -221,56 +230,56 @@
 }
 
 .daily-table {
-  margin-bottom: 20px;
+  width: 100%;
   overflow-x: auto;
+  margin-top: 10px;
 }
 
 .daily-table table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9em;
-}
-
-.daily-table th,
-.daily-table td {
-  padding: 8px 12px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
+  font-size: 14px;
 }
 
 .daily-table th {
   background-color: #f5f5f5;
-  font-weight: 500;
+  padding: 10px;
+  text-align: left;
+  border-bottom: 2px solid #ddd;
+  font-weight: 600;
 }
 
-.daily-table .trades-list {
+.daily-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.daily-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+.trades-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 5px;
 }
 
-.daily-table .trades-list span {
-  padding: 2px 6px;
+.trades-list .buy {
+  background-color: rgba(82, 196, 26, 0.1);
+  border: 1px solid rgba(82, 196, 26, 0.2);
+  color: #52c41a;
+  padding: 2px 5px;
   border-radius: 4px;
-  font-size: 0.9em;
+  font-size: 12px;
 }
 
-.daily-table .trades-list .buy {
-  background-color: rgba(76, 175, 80, 0.1);
-  color: #4caf50;
-}
-
-.daily-table .trades-list .sell {
-  background-color: rgba(244, 67, 54, 0.1);
-  color: #f44336;
-}
-
-.daily-table .positive {
-  color: #4caf50;
-}
-
-.daily-table .negative {
-  color: #f44336;
+.trades-list .sell {
+  background-color: rgba(255, 77, 79, 0.1);
+  border: 1px solid rgba(255, 77, 79, 0.2);
+  color: #ff4d4f;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 12px;
 }
 
 /* 為每個產業創建一個 class */
