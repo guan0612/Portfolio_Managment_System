@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/gat/dates', methods=['GET'])
+@app.route('/api/dates', methods=['GET'])
 def get_available_dates():
     # 取得所有CSV文件
     files = glob.glob('./GAT_main/output/*.csv')
@@ -16,7 +16,7 @@ def get_available_dates():
     dates.sort(reverse=True)  # 最新日期在前
     return jsonify(dates)
 
-@app.route('/gat/<date>', methods=['GET'])
+@app.route('/api/<date>', methods=['GET'])
 def gat(date):
     try:
         # 取得指定日期的CSV文件
@@ -31,9 +31,7 @@ def gat(date):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-
-@app.route('/trading-performance', methods=['GET'])
+@app.route('/api/trading-performance', methods=['GET'])
 def trading_performance():
     # 讀取交易行為和帳戶價值數據
     actions_path = './Trading Agent/actions.csv'
