@@ -243,10 +243,26 @@ const TradingStrategy = () => {
     fetch(`${API_URL}/api/sharpe-ratios`)
       .then(response => response.text())
       .then(text => {
-        const cleanedText = text.replace(/NaN/g, '0');
-        const data = JSON.parse(cleanedText);
-        console.log('Sharpe ratio data:', data);
-        setSharpeRatioData(data);
+        try {
+          const cleanedText = text.replace(/NaN/g, '0');
+          const data = JSON.parse(cleanedText);
+          console.log('Sharpe ratio data:', data);
+          
+          // 處理數據格式
+          const processedData = {};
+          Object.entries(data).forEach(([stockId, stockData]) => {
+            if (stockData && stockData.dates && stockData.values) {
+              processedData[stockId] = {
+                dates: stockData.dates,
+                values: stockData.values.map(value => parseFloat(value) || 0)
+              };
+            }
+          });
+          
+          setSharpeRatioData(processedData);
+        } catch (error) {
+          console.error('Error parsing Sharpe ratio data:', error);
+        }
       })
       .catch(error => {
         console.error('Error fetching Sharpe ratios:', error);
@@ -260,8 +276,8 @@ const TradingStrategy = () => {
       Object.entries(sharpeRatioData).forEach(([stockId, data]) => {
         if (selectedLegend[stockId] && data.dates && data.values) {
           const seriesData = data.dates.map((date, index) => {
-            const value = parseFloat(data.values[index]);
-            return [date, isNaN(value) ? 0 : value];
+            const value = data.values[index];
+            return [date, value];
           });
 
           allSeries.push({
@@ -288,6 +304,13 @@ const TradingStrategy = () => {
         trigger: 'axis',
         axisPointer: {
           type: 'cross'
+        },
+        formatter: function(params) {
+          let result = params[0].axisValue + '<br/>';
+          params.forEach(param => {
+            result += param.seriesName + ': ' + param.value[1].toFixed(3) + '<br/>';
+          });
+          return result;
         }
       },
       legend: {
