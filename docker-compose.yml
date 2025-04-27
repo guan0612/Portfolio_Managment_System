@@ -7,11 +7,10 @@ services:
       context: ./front-end
       dockerfile: dockerfile
     ports:
-      - "3000:3000"  # 將容器內的 3000 埠映射到主機的 3000 埠
+      - "3000:3000"
     environment:
       - NODE_ENV=production
-      - REACT_APP_API_URL=/api
-      - REACT_APP_WS_URL=ws://140.115.54.36:3001/ws
+      - REACT_APP_API_URL=http://140.115.54.36:5000/api
     depends_on:
       - backend
     networks:
@@ -24,9 +23,9 @@ services:
       context: ./back-end
       dockerfile: dockerfile
     ports:
-      - "5000:5000"  # 將容器內的 5000 埠映射到主機的 5000 埠
+      - "5000:5000"
     environment:
-      - FLASK_ENV=production
+      - FLASK_ENV=development
       - FLASK_APP=app.py
     volumes:
       - ./back-end:/app
@@ -34,7 +33,7 @@ services:
       - nginx_proxy
       - app-network
 
-  # 定義網路
+# 定義網路
 networks:
   nginx_proxy:
     external: true

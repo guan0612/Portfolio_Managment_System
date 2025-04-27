@@ -1,23 +1,20 @@
-# 使用 Node.js 官方映像檔作為基礎
+# Use Node.js official image as base
 FROM node:18-alpine
 
-# 設定工作目錄
+# Set working directory
 WORKDIR /app
 
-# 複製 package.json 和 package-lock.json
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# 安裝依賴套件
+# Install dependencies
 RUN npm install
 
-# 複製所有原始碼
+# Copy all source code
 COPY . .
 
-# 建置應用程式
-RUN npm run build
-
-# 暴露應用程式使用的埠號
+# Expose port
 EXPOSE 3000
 
-# 啟動應用程式
+# Start in development mode
 CMD ["npm", "start"]

@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import Papa from 'papaparse';
+import { useNavigate } from 'react-router-dom';
+// Import only the components we need without CSS import
+import { Select } from 'antd';
 import TradingAgent from './TradingAgent';
 import '../style/TradingStrategy.css';
 
+const { Option } = Select;
 const API_URL = process.env.REACT_APP_API_URL;
 const TradingStrategy = () => {
+  const navigate = useNavigate();
   const [stockData, setStockData] = useState([]);
   const [dates, setDates] = useState([]);
   const [stocks, setStocks] = useState([]);
@@ -13,7 +18,7 @@ const TradingStrategy = () => {
   const [selectedStocks, setSelectedStocks] = useState({ buy: [], sell: [] });
   const [selectedLegend, setSelectedLegend] = useState({});
   const [zoomRange, setZoomRange] = useState({ start: 0, end: 100 });
-  const [activeTab, setActiveTab] = useState('agent'); // 'agent' or 'strategy'
+  const [activeTab, setActiveTab] = useState('strategy'); // Changed default to 'strategy'
   const [tableData, setTableData] = useState([]);
   const chartRef = useRef(null);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -23,14 +28,62 @@ const TradingStrategy = () => {
   const [scrollLeft, setScrollLeft] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
   const tableWrapperRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const dropdownButtonRef = useRef(null);
+  const [sharpeRatios, setSharpeRatios] = useState({});
+  const [sharpeRatioData, setSharpeRatioData] = useState({});
+
+  // Add navigation handler
+  const handleTabChange = (tab) => {
+    if (tab === 'agent') {
+      navigate('/trading-agent');
+    }
+  };
+
+  // Handle closing dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && 
+          !dropdownRef.current.contains(event.target) && 
+          dropdownButtonRef.current && 
+          !dropdownButtonRef.current.contains(event.target)) {
+        dropdownRef.current.style.display = 'none';
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleChartClick = (params) => {
-    // Get the date whether clicking on a point or the axis
-    const date = params.name || params.value;
-    if (date) {
+    console.log('Chart clicked:', params);
+    // Check if the click is on axis label
+    if (params.componentType === 'xAxis') {
+        const date = params.value;
+        console.log('Selected date from axis:', date);
       setSelectedDate(date);
       
       // Find stocks for this date
+        const stocksForDate = stockData.reduce((acc, stock) => {
+            const dataPoint = stock.data.find(d => d[0] === date);
+            if (dataPoint) {
+                if (dataPoint[1] === 1) {
+                    acc.buy.push(stock.name);
+                } else if (dataPoint[1] === 0) {
+                    acc.sell.push(stock.name);
+                }
+            }
+            return acc;
+        }, { buy: [], sell: [] });
+        
+        console.log('Stocks for date:', stocksForDate);
+        setSelectedStocks(stocksForDate);
+    } else if (params.name) { // Handle point clicks as before
+        const date = params.name;
+        setSelectedDate(date);
+        
       const stocksForDate = stockData.reduce((acc, stock) => {
         const dataPoint = stock.data.find(d => d[0] === date);
         if (dataPoint) {
@@ -127,7 +180,7 @@ const TradingStrategy = () => {
             
             // Initialize legend selection state
             const initialLegendState = stockSymbols.reduce((acc, stock) => {
-              acc[stock] = false;
+              acc[stock] = false;  // Set all stocks to false (deselected) initially
               return acc;
             }, {});
             setSelectedLegend(initialLegendState);
@@ -140,30 +193,18 @@ const TradingStrategy = () => {
                 data: data.map(row => [row.date, parseInt(row[stock])]),
                 symbol: 'circle',
                 symbolSize: 8,
+
+                step: 'end',
+                showSymbol: true,
+                connectNulls: true,
+
                 lineStyle: {
                   width: 2,
-                  opacity: 1,
-                  shadowBlur: 4,
-                  shadowColor: 'rgba(0,0,0,0.3)'
+                  type: 'solid'
                 },
                 itemStyle: {
                   borderWidth: 2,
-                  borderColor: '#fff',
-                  shadowBlur: 4,
-                  shadowColor: 'rgba(0,0,0,0.2)'
-                },
-                emphasis: {
-                  focus: 'series',
-                  scale: true,
-                  lineStyle: {
-                    width: 3,
-                    opacity: 1
-                  },
-                  itemStyle: {
-                    borderWidth: 3,
-                    shadowBlur: 10,
-                    shadowColor: 'rgba(0,0,0,0.3)'
-                  }
+                  borderColor: '#fff'
                 }
               };
             });
@@ -180,160 +221,170 @@ const TradingStrategy = () => {
       });
   }, []);
 
-  const getOption = () => {
-    return {
-      title: {
-        text: 'Stock-Picked Agent',
-        left: 'center',
-        top: 10,
-        textStyle: {
-          fontSize: 16
-        }
-      },
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'line',
-          label: {
-            backgroundColor: '#6a7985'
+  useEffect(() => {
+    // Update chart when selection changes
+    if (chartRef.current) {
+      const chart = chartRef.current.getEchartsInstance();
+      if (!chart) return;
+
+      try {
+        chart.setOption({
+          legend: {
+            selected: selectedLegend
           }
-        },
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderColor: '#ddd',
-        borderWidth: 1,
-        padding: [10, 15],
-        textStyle: {
-          color: '#333'
-        },
-        formatter: function (params) {
-          const date = params[0].data[0];
-          let result = `<div class="trading-strategy-tooltip-title">Date: ${date}</div>`;
-          let selectedStocks = [];
-          let notSelectedStocks = [];
+        });
+      } catch (error) {
+        console.warn('Chart not ready yet:', error);
+      }
+    }
+  }, [selectedLegend]);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/sharpe-ratios`)
+      .then(response => response.text())
+      .then(text => {
+        try {
+          const cleanedText = text.replace(/NaN/g, '0');
+          const data = JSON.parse(cleanedText);
+          console.log('Sharpe ratio data:', data);
           
-          params.forEach(param => {
-            const value = param.data[1];
-            if (value === 1) {
-              selectedStocks.push(param.seriesName);
-            } else if (value === 0) {
-              notSelectedStocks.push(param.seriesName);
+          // 處理數據格式
+          const processedData = {};
+          Object.entries(data).forEach(([stockId, stockData]) => {
+            if (stockData && stockData.dates && stockData.values) {
+              processedData[stockId] = {
+                dates: stockData.dates,
+                values: stockData.values.map(value => parseFloat(value) || 0)
+              };
             }
           });
           
-          if (selectedStocks.length > 0) {
-            result += `<div class="trading-strategy-tooltip-selected"><b>SELECTED (${selectedStocks.length}):</b> ${selectedStocks.join(', ')}</div>`;
-          }
-          if (notSelectedStocks.length > 0) {
-            result += `<div class="trading-strategy-tooltip-not-selected"><b>NOT SELECTED (${notSelectedStocks.length}):</b> ${notSelectedStocks.join(', ')}</div>`;
-          }
-          
+          setSharpeRatioData(processedData);
+        } catch (error) {
+          console.error('Error parsing Sharpe ratio data:', error);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching Sharpe ratios:', error);
+      });
+  }, []);
+
+  const getOption = () => {
+    const allSeries = [];
+    
+    if (sharpeRatioData && Object.keys(sharpeRatioData).length > 0) {
+      Object.entries(sharpeRatioData).forEach(([stockId, data]) => {
+        if (selectedLegend[stockId] && data.dates && data.values) {
+          const seriesData = data.dates.map((date, index) => {
+            const value = data.values[index];
+            return [date, value];
+          });
+
+          allSeries.push({
+            name: stockId,
+            type: 'line',
+            data: seriesData,
+            symbol: 'circle',
+            symbolSize: 4,
+            lineStyle: {
+              width: 2,
+              opacity: 1
+            },
+            itemStyle: {
+              opacity: 1
+            }
+          });
+        }
+      });
+    }
+
+    return {
+      animation: false,
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'cross'
+        },
+        formatter: function(params) {
+          let result = params[0].axisValue + '<br/>';
+          params.forEach(param => {
+            result += param.seriesName + ': ' + param.value[1].toFixed(3) + '<br/>';
+          });
           return result;
         }
       },
       legend: {
-        type: 'scroll',
+        type: 'plain',
         orient: 'vertical',
-        right: 10,
-        top: 40,
-        bottom: 40,
+        right: 0,
+        top: 200,
+        padding: [5, 10],
+        itemGap: 10,
         textStyle: {
-          fontSize: 11
-        },
-        selected: selectedLegend,
-        selectedMode: 'multiple',
-        selector: [
-          {
-            type: 'all',
-            title: 'All'
-          },
-          {
-            type: 'inverse',
-            title: 'Inverse'
-          }
-        ]
+          fontSize: 12
+        }
       },
       grid: {
         left: 50,
         right: '15%',
-        top: 50,
-        bottom: 80,
+        top: 150,
+        bottom: 180,
         containLabel: true
       },
       xAxis: {
         type: 'category',
-        boundaryGap: false,
+        data: sharpeRatioData[Object.keys(sharpeRatioData)[0]]?.dates || [],
         axisLabel: {
           rotate: 45,
-          fontSize: 11,
-          interval: 0,
-          color: '#333',
-          fontWeight: 'normal',
-          show: true,
-          clickable: true
-        },
-        axisTick: {
-          alignWithLabel: true,
-          show: true,
-          length: 8,  // Make ticks longer
-          lineStyle: {
-            color: '#666'
-          }
-        },
-        splitLine: {
-          show: true,
-          lineStyle: {
-            type: 'dashed',
-            color: '#ddd'
-          }
-        },
-        triggerEvent: true  // This is crucial for enabling axis clicks
+          margin: 14
+        }
       },
       yAxis: {
         type: 'value',
-        min: 0,
-        max: 1,
-        interval: 1,
-        axisLabel: {
-          formatter: function(value) {
-            if (value === 1) return '↑ SELECTED';
-            if (value === 0) return '↓ NOT SELECTED';
-            return '';
-          },
-          fontSize: 12,
-          color: (value) => value === 1 ? '#52c41a' : value === 0 ? '#ff4d4f' : '#666',
-          fontWeight: 'bold'
+        name: 'Sharpe Ratio',
+        axisLine: {
+          show: true
         },
         splitLine: {
-          show: true,
-          lineStyle: {
-            type: 'dashed',
-            color: '#ddd'
-          }
+          show: true
         }
       },
-      series: stockData,
-      toolbox: {
-        feature: {
-          dataZoom: {
-            yAxisIndex: 'none'
-          },
-          restore: {},
-          saveAsImage: {}
-        },
-        right: 60,
-        top: 10
-      },
-      dataZoom: [
-        {
-          type: 'slider',
-          show: true,
-          xAxisIndex: [0],
-          start: zoomRange.start,
-          end: zoomRange.end,
-          bottom: 10
-        }
-      ]
+      dataZoom: [{
+        type: 'slider',
+        show: true,
+        xAxisIndex: [0],
+        start: zoomRange.start,
+        end: zoomRange.end,
+        height: 30,
+        bottom: 80
+      }],
+      series: allSeries
     };
+  };
+
+  // In the dropdown click handler
+  const handleStockClick = (stock) => {
+    const newSelected = { ...selectedLegend };
+    newSelected[stock] = !newSelected[stock];
+    setSelectedLegend(newSelected);
+  };
+
+  // In the Select All handler
+  const handleSelectAll = () => {
+    const newSelected = {};
+    stocks.forEach(stock => {
+      newSelected[stock] = true;
+    });
+    setSelectedLegend(newSelected);
+  };
+
+  // In the Clear All handler
+  const handleClearAll = () => {
+    const newSelected = {};
+    stocks.forEach(stock => {
+      newSelected[stock] = false;
+    });
+    setSelectedLegend(newSelected);
   };
 
   return (
@@ -354,22 +405,6 @@ const TradingStrategy = () => {
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
           <button
-            onClick={() => setActiveTab('agent')}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '6px',
-              backgroundColor: activeTab === 'agent' ? '#1890ff' : 'transparent',
-              color: activeTab === 'agent' ? '#fff' : '#666',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 500,
-              transition: 'all 0.3s'
-            }}
-          >
-            Stock-Picked Agent
-          </button>
-          <button
             onClick={() => setActiveTab('strategy')}
             style={{
               padding: '8px 16px',
@@ -383,12 +418,28 @@ const TradingStrategy = () => {
               transition: 'all 0.3s'
             }}
           >
+            Stock-Picked Agent
+          </button>
+          <button
+            onClick={() => handleTabChange('agent')}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              backgroundColor: activeTab === 'agent' ? '#1890ff' : 'transparent',
+              color: activeTab === 'agent' ? '#fff' : '#666',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 500,
+              transition: 'all 0.3s'
+            }}
+          >
             Trading Agent
           </button>
         </div>
       </div>
 
-      {activeTab === 'agent' ? (
+      {activeTab === 'strategy' ? (
         <div style={{ 
           backgroundColor: 'white',
           borderRadius: '8px',
@@ -396,23 +447,32 @@ const TradingStrategy = () => {
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           marginBottom: '20px'
         }}>
-          <div style={{ height: '600px' }}>
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <div style={{ flex: 1, position: 'relative' }}>
+              <div style={{ 
+                height: '780px',
+                marginTop: '-100px',
+                marginBottom: '0px',
+                position: 'relative'
+              }}>
             <ReactECharts
               ref={chartRef}
               option={getOption()}
-              className="trading-strategy-chart"
-              style={{ height: '100%', width: '100%' }}
-              opts={{ renderer: 'svg' }}
+                  style={{ 
+                    height: '100%', 
+                    width: '100%',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0
+                  }}
+                  opts={{ 
+                    renderer: 'svg',
+                    width: 'auto',
+                    height: 'auto'
+                  }}
               onEvents={{
-                'legendselectchanged': (params) => {
-                  const option = chartRef.current.getEchartsInstance().getOption();
-                  const currentZoom = option.dataZoom[0];
-                  setSelectedLegend(params.selected);
-                  setZoomRange({
-                    start: currentZoom.start,
-                    end: currentZoom.end
-                  });
-                },
+                    'click': handleChartClick,
+                    'axisClick': handleChartClick,
                 'datazoom': (params) => {
                   if (Array.isArray(params) && params[0]) {
                     setZoomRange({
@@ -420,35 +480,217 @@ const TradingStrategy = () => {
                       end: params[0].end
                     });
                   }
-                },
-                'click': (params) => {
-                  let date;
-                  if (params.componentType === 'xAxis' && params.value) {
-                    date = params.value;
-                  }
-                  else if (params.componentType === 'series' && params.data) {
-                    date = params.data[0];
-                  }
+                    }
+                  }}
+                  notMerge={true}
+                  lazyUpdate={true}
+                />
+              </div>
+            </div>
+            <div style={{ width: '200px', padding: '10px' }}>
+              <div style={{ 
+                border: '1px solid #ddd', 
+                borderRadius: '4px', 
+                position: 'relative',
+                width: '100%'
+              }}>
+                <div 
+                  ref={dropdownButtonRef}
+                  style={{ 
+                    padding: '8px 12px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    backgroundColor: '#fff',
+                    borderRadius: '4px'
+                  }}
+                  onClick={() => {
+                    if (dropdownRef.current) {
+                      dropdownRef.current.style.display = dropdownRef.current.style.display === 'none' ? 'block' : 'none';
+                    }
+                  }}
+                >
+                  <span>{Object.values(selectedLegend).filter(Boolean).length} stocks selected</span>
+                  <span>▼</span>
+                </div>
+                <div 
+                  ref={dropdownRef}
+                  style={{ 
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    backgroundColor: '#fff',
+                    border: '1px solid #ddd',
+                    borderRadius: '0 0 4px 4px',
+                    maxHeight: '300px',
+                    overflowY: 'auto',
+                    display: 'none',
+                    zIndex: 100,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                  }}
+                >
+                  <div style={{ position: 'sticky', top: 0, backgroundColor: '#fff', padding: '8px', borderBottom: '1px solid #eee' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Search stocks..." 
+                      style={{ 
+                        width: '100%', 
+                        padding: '8px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px'
+                      }}
+                      onChange={(e) => {
+                        const value = e.target.value.toLowerCase();
+                        const items = document.querySelectorAll('.stock-item');
+                        items.forEach(item => {
+                          const text = item.textContent.toLowerCase();
+                          item.style.display = text.includes(value) ? 'block' : 'none';
+                        });
+                      }}
+                    />
+                  </div>
+                  <div style={{ padding: '8px 4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 8px 8px' }}>
+                      <button 
+                        style={{ 
+                          border: 'none', 
+                          background: 'none', 
+                          color: '#1890ff', 
+                          cursor: 'pointer',
+                          padding: '4px 8px',
+                          fontSize: '12px'
+                        }}
+                        onClick={() => {
+                          const newSelected = {};
+                          stocks.forEach(stock => {
+                            newSelected[stock] = true;
+                          });
+                          setSelectedLegend(newSelected);
 
-                  if (date) {
-                    setSelectedDate(date);
-                    const stocksForDate = stockData.reduce((acc, stock) => {
-                      const dataPoint = stock.data.find(d => d[0] === date);
-                      if (dataPoint) {
-                        if (dataPoint[1] === 1) {
-                          acc.buy.push(stock.name);
-                        } else if (dataPoint[1] === 0) {
-                          acc.sell.push(stock.name);
-                        }
-                      }
-                      return acc;
-                    }, { buy: [], sell: [] });
-                    
-                    setSelectedStocks(stocksForDate);
-                  }
-                }
-              }}
-            />
+                          // Update chart for Select All
+                          if (chartRef.current) {
+                            const chart = chartRef.current.getEchartsInstance();
+                            if (chart) {
+                              chart.setOption({
+                                legend: {
+                                  selected: newSelected
+                                }
+                              }, { replaceMerge: ['series'] });
+                            }
+                          }
+                        }}
+                      >
+                        Select All
+                      </button>
+                      <button 
+                        style={{ 
+                          border: 'none', 
+                          background: 'none', 
+                          color: '#1890ff', 
+                          cursor: 'pointer',
+                          padding: '4px 8px',
+                          fontSize: '12px'
+                        }}
+                        onClick={() => {
+                          const newSelected = {};
+                          stocks.forEach(stock => {
+                            newSelected[stock] = false;
+                          });
+                          setSelectedLegend(newSelected);
+
+                          // Update chart for Clear All
+                          if (chartRef.current) {
+                            const chart = chartRef.current.getEchartsInstance();
+                            if (chart) {
+                              chart.setOption({
+                                legend: {
+                                  selected: newSelected
+                                }
+                              }, { replaceMerge: ['series'] });
+                            }
+                          }
+                        }}
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                    {stocks.map(stock => (
+                      <div 
+                        key={stock} 
+                        className="stock-item"
+                        style={{ 
+                          padding: '8px 12px',
+                          cursor: 'pointer',
+                          backgroundColor: selectedLegend[stock] ? '#e6f7ff' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                        onClick={() => {
+                          const newSelected = { ...selectedLegend };
+                          newSelected[stock] = !newSelected[stock];
+                          setSelectedLegend(newSelected);
+
+                          if (chartRef.current) {
+                            const chart = chartRef.current.getEchartsInstance();
+                            if (chart) {
+                              chart.setOption({
+                                legend: {
+                                  selected: newSelected
+                                }
+                              }, { replaceMerge: ['series'] });
+                            }
+                          }
+                        }}
+                      >
+                        <input 
+                          type="checkbox" 
+                          checked={selectedLegend[stock] || false}
+                          onChange={() => {}}
+                        />
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center',
+                          width: '100%',
+                          gap: '12px'
+                        }}>
+                          <span>{stock}</span>
+                          {sharpeRatios[stock] !== undefined && (
+                            <span style={{ 
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              color: Number(sharpeRatios[stock]) > 0 ? '#52c41a' : '#ff4d4f',
+                              backgroundColor: Number(sharpeRatios[stock]) > 0 ? 'rgba(82, 196, 26, 0.1)' : 'rgba(255, 77, 79, 0.1)',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              SR: {Number(sharpeRatios[stock]).toFixed(3)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div style={{ 
+                marginTop: '8px', 
+                fontSize: '12px', 
+                color: '#666',
+                padding: '8px',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '4px',
+                display: 'flex',
+                justifyContent: 'space-between'
+              }}>
+                <span>Selected: {Object.values(selectedLegend).filter(Boolean).length}</span>
+                <span>Total: {stocks.length}</span>
+              </div>
+            </div>
           </div>
           
           {selectedDate && (
@@ -501,10 +743,21 @@ const TradingStrategy = () => {
                           textAlign: 'center',
                           border: '1px solid rgba(82, 196, 26, 0.2)',
                           cursor: 'pointer',
-                          transition: 'all 0.2s'
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px'
                         }}
                       >
-                        {stock}
+                        <div>{stock}</div>
+                        {sharpeRatios[stock] !== undefined && (
+                          <div style={{ 
+                            fontSize: '12px',
+                            color: sharpeRatios[stock] > 0 ? '#52c41a' : '#ff4d4f'
+                          }}>
+                            SR: {sharpeRatios[stock].toFixed(3)}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -564,7 +817,7 @@ const TradingStrategy = () => {
           )}
           
           {/* Stock Selection Table */}
-          <div className="stock-selection-table-container">
+          <div className="stock-selection-table-container" style={{ marginTop: '60px' }}>
             <div 
               ref={tableWrapperRef}
               className="table-wrapper"
