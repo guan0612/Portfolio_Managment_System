@@ -9,8 +9,9 @@ services:
     ports:
       - "3000:3000"
     environment:
+
       - NODE_ENV=production
-      - REACT_APP_API_URL=http://140.115.54.36:5000/api
+      - REACT_APP_API_URL=http://localhost:5000/api
     depends_on:
       - backend
     networks:

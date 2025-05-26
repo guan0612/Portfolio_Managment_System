@@ -31,7 +31,7 @@ def test(model, criterion, input, target, mask):
         loss = criterion(output, target)
     return loss.item()
     
-def train_iter(epoch, model, optimizer, criterion, input, target, mask_train, mask_val, F_date, print_every=10):
+def train_iter(epoch, model, optimizer, criterion, input, target, mask_train, mask_val, stock_codes, F_date, print_every=10):
 
     global min_loss_val
     
@@ -68,7 +68,9 @@ def train_iter(epoch, model, optimizer, criterion, input, target, mask_train, ma
         reshaped_array = numpy_array.reshape(-1, numpy_array.shape[2])
         df = pd.DataFrame(reshaped_array)
         
-        file_name = f'tensor_epoch_{F_date}.csv'
+        df.columns = stock_codes
+        
+        file_name = f'output/tensor_epoch_{F_date}.csv'
         df.to_csv(file_name, index=False)
         
     return loss_train, loss_val
@@ -198,8 +200,12 @@ if __name__ == '__main__':
 
     file_paths = [glob.glob("./data/*.csv")]
     
+    # 取得股票代號清單
+    stock_codes = [os.path.basename(file).split('.')[0] for file in file_paths[0]]
+    
     # 替換原來的 date.txt 讀取方式
     dates = get_dates_from_csv()
+    print(dates)
     
     # Create the model
     # The model consists of a 2-layer stack of Graph Attention Layers (GATs).
@@ -217,15 +223,15 @@ if __name__ == '__main__':
     optimizer = Adam(gat_net.parameters(), lr=args.lr, weight_decay=args.l2)
     criterion = nn.MSELoss()
     
-    for graph in range(40, len(dates)+1):
+    for graph in range(1, len(dates)+1):
         if graph <= len(dates):
-            F_date = dates[graph-1]
+            F_date = dates[graph]
             print(f"第{graph}筆的資料: {F_date}")
         else:
             F_date = ''
             print(f"第{graph}筆的資料不存在。")
 
-        features, labels, adj_mat = read_data(file_paths,graph-1)
+        features, labels, adj_mat = read_data(file_paths,graph)
         
         # 創建並移動索引
         idx = torch.randperm(len(labels)).to(device)
@@ -239,7 +245,7 @@ if __name__ == '__main__':
 
         # Train and evaluate the model
         for epoch in range(args.epochs):
-            loss_train, loss_val = train_iter(epoch + 1, gat_net, optimizer, criterion, (features, adj_mat), labels, idx_train, idx_val, F_date , args.val_every)
+            loss_train, loss_val = train_iter(epoch + 1, gat_net, optimizer, criterion, (features, adj_mat), labels, idx_train, idx_val, stock_codes, F_date , args.val_every)
             train_losses.append(loss_train)
             val_losses.append(loss_val)
             if args.dry_run:

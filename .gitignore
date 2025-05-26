@@ -1,1 +1,4 @@
 front-end/node_modules
+back-end/GAT_main/output/
+back-end/GAT_main/data/
+docker-compose.yml

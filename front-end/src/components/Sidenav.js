@@ -6,8 +6,9 @@ const Sidenav = () => {
   const menuItems = [
     { to: '/introduction', icon: '📖', text: 'Introduction' },
     { to: '/stock-relation-graph', icon: '🕸️', text: 'Stock Relation Graph' },
-    { to: '/stock-relation-analysis', icon: '🔍', text: 'Stock Relation Analysis' },
-    { to: '/trading-strategy', icon: '💰', text: 'Trading Strategy' },
+    // { to: '/stock-relation-analysis', icon: '🔍', text: 'Stock Relation Analysis' },
+    { to: '/stock-picked-agent', icon: '💰', text: 'Stock Picked Agent' },
+    // { to: '/trading-agent', icon: '📈', text: 'Trading Strategy' },
   ];
 
   return (

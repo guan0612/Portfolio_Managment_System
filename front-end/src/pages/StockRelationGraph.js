@@ -27,6 +27,31 @@ const StockRelationGraph = () => {
     const [timeSeriesLoading, setTimeSeriesLoading] = useState(false);
     const allIndustries = getAllIndustries();
 
+    // 添加一個輔助函數來獲取季度
+    const getQuarter = (dateStr) => {
+        const date = new Date(dateStr);
+        const month = date.getMonth() + 1; // JavaScript 月份從 0 開始
+        const day = date.getDate();
+        let year = date.getFullYear();
+
+        // 處理年份
+        if (month === 4) {
+            year = year - 1;
+        } else if (month >= 11 || month <= 3) {
+            year = year - 1;
+        }
+
+        if ((month === 5 && day >= 16) || (month >= 6 && month <= 8 && day < 15)) {
+            return `${year}Q1`;
+        } else if ((month === 8 && day >= 15) || (month >= 9 && month <= 11 && day < 15)) {
+            return `${year}Q2`;
+        } else if ((month === 11 && day >= 15) || month === 12 || month <= 3) {
+            return `${year}Q3`;
+        } else {
+            return `${year}Q4`;
+        }
+    };
+
     // 添加一個輔助函數來獲取完整的股票代碼
     const getFullStockCode = (code) => `${code}.TW`;
 
@@ -53,9 +78,21 @@ const StockRelationGraph = () => {
         fetch(`${API_URL}/dates`)
             .then(response => response.json())
             .then(dates => {
-                setAvailableDates(dates.sort((a, b) => new Date(b) - new Date(a)));
-                if (dates.length > 0) {
-                    setSelectedDate(dates[0]);
+                // 將日期轉換為季度格式並去重
+                const quarters = Array.from(new Set(dates.map(date => getQuarter(date))))
+                    .sort((a, b) => {
+                        // 解析季度字串（例如：2023Q1）
+                        const [yearA, quarterA] = a.split('Q');
+                        const [yearB, quarterB] = b.split('Q');
+                        if (yearA !== yearB) {
+                            return parseInt(yearB) - parseInt(yearA); // 年份降序
+                        }
+                        return parseInt(quarterB) - parseInt(quarterA); // 季度降序
+                    });
+                
+                setAvailableDates(quarters);
+                if (quarters.length > 0) {
+                    setSelectedDate(quarters[0]);
                 }
             })
             .catch(error => console.error('Error fetching dates:', error));
@@ -66,7 +103,27 @@ const StockRelationGraph = () => {
         if (!selectedDate) return;
         
         setLoading(true);
-        fetch(`${API_URL}/${selectedDate}`)
+        // 將季度轉換回日期格式（使用該季度的最後一天）
+        const [year, quarter] = selectedDate.split('Q');
+        let date;
+        switch(quarter) {
+            case '1':
+                date = `${year}-08-14`;
+                break;
+            case '2':
+                date = `${year}-11-14`;
+                break;
+            case '3':
+                date = `${year}-05-15`;
+                break;
+            case '4':
+                date = `${year}-08-15`;
+                break;
+            default:
+                date = `${year}-12-31`;
+        }
+        
+        fetch(`${API_URL}/${date}`)
             .then(response => response.json())
             .then(data => {
                 if (Array.isArray(data)) {
@@ -283,7 +340,7 @@ const StockRelationGraph = () => {
                 console.log(`${link.source} (${sourceName}) → ${selectedStock} (${getCompanyName(selectedStock)}): ${link.value.toFixed(5)}`);
             });
 
-        // 处理柱状图数据
+        // 處理柱狀圖數據
         const barData = relatedLinks.map(link => ({
             stock: link.source,
             value: link.value,
@@ -539,7 +596,7 @@ const StockRelationGraph = () => {
                             value={selectedDate}
                             onChange={setSelectedDate}
                             options={availableDates.map(date => ({ value: date, label: date }))}
-                            placeholder="選擇日期"
+                            placeholder="選擇季度"
                         />
                         <Select
                             className="control-item"
