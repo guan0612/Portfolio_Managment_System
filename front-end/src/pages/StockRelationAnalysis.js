@@ -1781,7 +1781,7 @@ const StockRelationAnalysis = () => {
             
             <Tabs defaultActiveKey="1">
                 {renderHeatmapTabPane()}
-                {renderTimeSeriesTabPane()}
+                {/* {renderTimeSeriesTabPane()} */}
                 {renderRankingTabPane()}
                 {renderDistributionTabPane()}
             </Tabs>
